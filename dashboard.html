@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard – Renata</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f0f2f5; color: #222; }
+
+    /* Login */
+    #tela-login {
+      display: flex; flex-direction: column; align-items: center;
+      justify-content: center; min-height: 100vh; gap: 1rem;
+    }
+    #tela-login h1 { font-size: 1.4rem; }
+    #tela-login input {
+      padding: .6rem .9rem; border: 1px solid #ccc; border-radius: 4px;
+      font-size: 1rem; width: 280px;
+    }
+    #tela-login button {
+      padding: .65rem 1.5rem; background: #1a1a2e; color: #fff;
+      border: none; border-radius: 4px; cursor: pointer; font-size: 1rem;
+    }
+    #erro-login { color: #c00; font-size: .875rem; }
+
+    /* Dashboard */
+    #dashboard { display: none; }
+    nav {
+      background: #1a1a2e; color: #fff; padding: .75rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    nav h1 { font-size: 1.1rem; }
+    nav button {
+      background: transparent; border: 1px solid #888; color: #ccc;
+      padding: .35rem .85rem; border-radius: 4px; cursor: pointer; font-size: .85rem;
+    }
+
+    .abas { display: flex; background: #fff; border-bottom: 2px solid #ddd; }
+    .aba {
+      padding: .75rem 1.5rem; cursor: pointer; font-size: .9rem;
+      border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px;
+    }
+    .aba.ativa { border-bottom-color: #1a1a2e; font-weight: 600; }
+
+    .painel { display: none; padding: 1.5rem; max-width: 900px; margin: 0 auto; }
+    .painel.ativo { display: block; }
+
+    /* Formulários */
+    .campo { margin-bottom: 1rem; }
+    .campo label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .35rem; }
+    .campo input, .campo textarea {
+      width: 100%; padding: .6rem .8rem; border: 1px solid #ccc;
+      border-radius: 4px; font-size: .95rem; font-family: inherit;
+    }
+    .campo textarea { resize: vertical; min-height: 80px; }
+    .btn-salvar {
+      background: #1a1a2e; color: #fff; border: none; padding: .65rem 1.4rem;
+      border-radius: 4px; cursor: pointer; font-size: .95rem;
+    }
+    .btn-perigo {
+      background: #c00; color: #fff; border: none; padding: .4rem .85rem;
+      border-radius: 4px; cursor: pointer; font-size: .8rem;
+    }
+    .msg-status { margin-top: .75rem; font-size: .875rem; }
+    .msg-ok  { color: green; }
+    .msg-err { color: #c00; }
+
+    /* Projetos */
+    #lista-projetos-dash { margin-top: 1.5rem; }
+    .item-projeto {
+      background: #fff; border: 1px solid #ddd; border-radius: 6px;
+      padding: .85rem 1rem; margin-bottom: .75rem;
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .item-projeto-info h3 { font-size: .95rem; }
+    .item-projeto-info p  { font-size: .8rem; color: #666; margin-top: .2rem; }
+    .tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .4rem; }
+    .tag  { background: #e3e8ff; color: #3a4db7; font-size: .7rem; padding: .15rem .45rem; border-radius: 20px; }
+
+    /* Kanban */
+    #kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
+    .coluna-kanban {
+      background: #fff; border: 1px solid #ddd; border-radius: 6px;
+      padding: .85rem; min-height: 300px;
+    }
+    .coluna-kanban h3 { font-size: .85rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .75rem; color: #555; }
+    .card-kanban {
+      background: #f8f8fb; border: 1px solid #ddd; border-radius: 4px;
+      padding: .65rem .8rem; margin-bottom: .5rem; cursor: grab; font-size: .875rem;
+    }
+    .card-kanban:active { cursor: grabbing; opacity: .7; }
+    .nova-tarefa { margin-top: 1rem; display: flex; gap: .5rem; }
+    .nova-tarefa input { flex: 1; padding: .55rem .75rem; border: 1px solid #ccc; border-radius: 4px; font-size: .875rem; }
+    .nova-tarefa button { background: #1a1a2e; color: #fff; border: none; padding: .55rem 1rem; border-radius: 4px; cursor: pointer; }
+
+    /* Notas */
+    .item-nota {
+      background: #fff; border: 1px solid #ddd; border-radius: 6px;
+      padding: .85rem; margin-bottom: .75rem;
+    }
+    .item-nota h4 { font-size: .9rem; }
+    .item-nota span { font-size: .75rem; color: #999; }
+  </style>
+</head>
+<body>
+
+<!-- TELA DE LOGIN -->
+<div id="tela-login">
+  <h1>🔒 Dashboard – Renata</h1>
+  <input type="email"    id="email" placeholder="E-mail" />
+  <input type="password" id="senha" placeholder="Senha" />
+  <button onclick="fazerLogin()">Entrar</button>
+  <p id="erro-login"></p>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <nav>
+    <h1>Dashboard · Renata Oliveira</h1>
+    <button onclick="fazerLogout()">Sair</button>
+  </nav>
+
+  <div class="abas">
+    <button class="aba ativa" onclick="mudarAba('perfil', this)">Perfil</button>
+    <button class="aba"       onclick="mudarAba('projetos', this)">Projetos</button>
+    <button class="aba"       onclick="mudarAba('tarefas', this)">Tarefas</button>
+    <button class="aba"       onclick="mudarAba('notas', this)">Notas</button>
+  </div>
+
+  <!-- ABA PERFIL -->
+  <div id="painel-perfil" class="painel ativo">
+    <h2 style="margin-bottom:1.25rem">Editar Perfil Público</h2>
+    <div class="campo"><label>Nome</label><input type="text" id="p-nome" placeholder="Renata Oliveira Nascimento" /></div>
+    <div class="campo"><label>Bio curta</label><textarea id="p-bio" placeholder="Graduanda em Direito..."></textarea></div>
+    <div class="campo"><label>URL do LinkedIn</label><input type="url" id="p-linkedin" placeholder="https://linkedin.com/in/..." /></div>
+    <div class="campo"><label>URL da foto de perfil</label><input type="url" id="p-foto" placeholder="https://..." /></div>
+    <button class="btn-salvar" onclick="salvarPerfil()">Salvar perfil</button>
+    <p id="status-perfil" class="msg-status"></p>
+  </div>
+
+  <!-- ABA PROJETOS -->
+  <div id="painel-projetos" class="painel">
+    <h2 style="margin-bottom:1.25rem">Adicionar Projeto</h2>
+    <div class="campo"><label>Título</label><input type="text" id="proj-titulo" placeholder="Nome do projeto" /></div>
+    <div class="campo"><label>Descrição</label><textarea id="proj-desc" placeholder="Breve descrição..."></textarea></div>
+    <div class="campo"><label>Tags (separadas por vírgula)</label><input type="text" id="proj-tags" placeholder="Direito, Pesquisa, IBCCRIM" /></div>
+    <div class="campo"><label>URL do projeto</label><input type="url" id="proj-url" placeholder="https://..." /></div>
+    <button class="btn-salvar" onclick="adicionarProjeto()">Adicionar projeto</button>
+    <p id="status-projeto" class="msg-status"></p>
+    <div id="lista-projetos-dash"><p style="color:#999;font-size:.875rem">Carregando projetos...</p></div>
+  </div>
+
+  <!-- ABA TAREFAS -->
+  <div id="painel-tarefas" class="painel">
+    <h2 style="margin-bottom:1rem">Quadro de Tarefas</h2>
+    <div id="kanban">
+      <div class="coluna-kanban" id="col-todo"
+           ondragover="event.preventDefault()" ondrop="soltarCartao(event,'todo')">
+        <h3>📋 A Fazer</h3>
+      </div>
+      <div class="coluna-kanban" id="col-doing"
+           ondragover="event.preventDefault()" ondrop="soltarCartao(event,'doing')">
+        <h3>⚙️ Fazendo</h3>
+      </div>
+      <div class="coluna-kanban" id="col-done"
+           ondragover="event.preventDefault()" ondrop="soltarCartao(event,'done')">
+        <h3>✅ Concluído</h3>
+      </div>
+    </div>
+    <div class="nova-tarefa">
+      <input type="text" id="nova-tarefa-titulo" placeholder="Nova tarefa..." />
+      <button onclick="adicionarTarefa()">Adicionar</button>
+    </div>
+    <p id="status-tarefa" class="msg-status"></p>
+  </div>
+
+  <!-- ABA NOTAS -->
+  <div id="painel-notas" class="painel">
+    <h2 style="margin-bottom:1.25rem">Notas de Estudo</h2>
+    <p style="font-size:.85rem;color:#666;margin-bottom:1rem">
+      ⚠️ Versão de teste — Editor.js será integrado depois. Por enquanto texto puro, compatível com a vitrine.
+    </p>
+    <div class="campo"><label>Título da nota</label><input type="text" id="nota-titulo" placeholder="Ex: Criminologia Crítica – Resumo" /></div>
+    <div class="campo">
+      <label>Conteúdo (separe parágrafos com uma linha em branco)</label>
+      <textarea id="nota-corpo" style="min-height:200px" placeholder="Escreva aqui..."></textarea>
+    </div>
+    <button class="btn-salvar" onclick="salvarNota()">Salvar nota</button>
+    <p id="status-nota" class="msg-status"></p>
+    <div id="lista-notas" style="margin-top:1.5rem"><p style="color:#999;font-size:.875rem">Carregando notas...</p></div>
+  </div>
+</div>
+
+<script>
+  // ── Firebase ─────────────────────────────────────────────
+  const firebaseConfig = {
+    apiKey: "AIzaSyA-mizRLLIB3EvWxs6Xa6hTHaeSQj9jPaw",
+    authDomain: "renata-d1eba.firebaseapp.com",
+    projectId: "renata-d1eba",
+    storageBucket: "renata-d1eba.firebasestorage.app",
+    messagingSenderId: "873732794860",
+    appId: "1:873732794860:web:48e9abff4afb87e16f78c9"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db   = firebase.firestore();
+  const auth = firebase.auth();
+
+  let draggedId = null;
+
+  // ── Helpers ───────────────────────────────────────────────
+  function setStatus(id, msg, tipo = 'ok') {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className   = 'msg-status ' + (tipo === 'ok' ? 'msg-ok' : 'msg-err');
+    setTimeout(() => el.textContent = '', 4000);
+  }
+
+  // ── Auth ──────────────────────────────────────────────────
+  async function fazerLogin() {
+    const email = document.getElementById('email').value.trim();
+    const senha = document.getElementById('senha').value;
+    try {
+      await auth.signInWithEmailAndPassword(email, senha);
+    } catch (err) {
+      document.getElementById('erro-login').textContent = 'E-mail ou senha incorretos.';
+      console.error('[auth]', err.message);
+    }
+  }
+
+  async function fazerLogout() {
+    await auth.signOut();
+  }
+
+  auth.onAuthStateChanged(user => {
+    if (user) {
+      document.getElementById('tela-login').style.display = 'none';
+      document.getElementById('dashboard').style.display  = 'block';
+      carregarPerfil();
+      carregarProjetos();
+      carregarTarefas();
+      carregarNotas();
+    } else {
+      document.getElementById('tela-login').style.display = 'flex';
+      document.getElementById('dashboard').style.display  = 'none';
+    }
+  });
+
+  // ── Abas ──────────────────────────────────────────────────
+  function mudarAba(nome, btn) {
+    document.querySelectorAll('.painel').forEach(p => p.classList.remove('ativo'));
+    document.querySelectorAll('.aba').forEach(b => b.classList.remove('ativa'));
+    document.getElementById('painel-' + nome).classList.add('ativo');
+    btn.classList.add('ativa');
+  }
+
+  // ── PERFIL ────────────────────────────────────────────────
+  async function carregarPerfil() {
+    try {
+      const doc = await db.collection('configuracoes_publicas').doc('info_pessoal').get();
+      if (!doc.exists) return;
+      const d = doc.data();
+      document.getElementById('p-nome').value    = d.nome            || '';
+      document.getElementById('p-bio').value     = d.bio_curta       || '';
+      document.getElementById('p-linkedin').value = d.linkedin_url   || '';
+      document.getElementById('p-foto').value    = d.foto_perfil_url || '';
+    } catch (err) { console.error('[perfil] carregar:', err); }
+  }
+
+  async function salvarPerfil() {
+    const dados = {
+      nome:            document.getElementById('p-nome').value.trim(),
+      bio_curta:       document.getElementById('p-bio').value.trim(),
+      linkedin_url:    document.getElementById('p-linkedin').value.trim(),
+      foto_perfil_url: document.getElementById('p-foto').value.trim(),
+    };
+    try {
+      await db.collection('configuracoes_publicas').doc('info_pessoal').set(dados, { merge: true });
+      setStatus('status-perfil', '✅ Perfil salvo!');
+    } catch (err) {
+      setStatus('status-perfil', '❌ Erro ao salvar.', 'err');
+      console.error('[perfil] salvar:', err);
+    }
+  }
+
+  // ── PROJETOS ──────────────────────────────────────────────
+  async function adicionarProjeto() {
+    const titulo = document.getElementById('proj-titulo').value.trim();
+    if (!titulo) { setStatus('status-projeto', '⚠️ Título obrigatório.', 'err'); return; }
+    const chips_tags = document.getElementById('proj-tags').value.split(',').map(t => t.trim()).filter(Boolean);
+    const dados = {
+      titulo,
+      descricao:    document.getElementById('proj-desc').value.trim(),
+      chips_tags,
+      url_projeto:  document.getElementById('proj-url').value.trim(),
+      data_criacao: firebase.firestore.FieldValue.serverTimestamp(),
+    };
+    try {
+      await db.collection('projetos').add(dados);
+      setStatus('status-projeto', '✅ Projeto adicionado!');
+      ['proj-titulo','proj-desc','proj-tags','proj-url'].forEach(id => document.getElementById(id).value = '');
+      carregarProjetos();
+    } catch (err) {
+      setStatus('status-projeto', '❌ Erro ao adicionar.', 'err');
+      console.error('[projetos] adicionar:', err);
+    }
+  }
+
+  async function excluirProjeto(id) {
+    if (!confirm('Excluir este projeto?')) return;
+    try {
+      await db.collection('projetos').doc(id).delete();
+      carregarProjetos();
+    } catch (err) { console.error('[projetos] excluir:', err); }
+  }
+
+  async function carregarProjetos() {
+    const container = document.getElementById('lista-projetos-dash');
+    try {
+      const snapshot = await db.collection('projetos').orderBy('data_criacao', 'desc').get();
+      if (snapshot.empty) {
+        container.innerHTML = '<p style="color:#999;font-size:.875rem;margin-top:1rem">Nenhum projeto ainda.</p>';
+        return;
+      }
+      container.innerHTML = '<h3 style="margin:1rem 0 .75rem;font-size:.9rem;color:#555">Projetos cadastrados</h3>';
+      snapshot.forEach(doc => {
+        const p = doc.data();
+        const tags = (p.chips_tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+        const div = document.createElement('div');
+        div.className = 'item-projeto';
+        div.innerHTML = `
+          <div class="item-projeto-info">
+            <h3>${p.titulo}</h3>
+            <p>${p.descricao || ''}</p>
+            <div class="tags">${tags}</div>
+            ${p.url_projeto ? `<a href="${p.url_projeto}" target="_blank" style="font-size:.8rem">${p.url_projeto}</a>` : ''}
+          </div>
+          <button class="btn-perigo" onclick="excluirProjeto('${doc.id}')">Excluir</button>
+        `;
+        container.appendChild(div);
+      });
+    } catch (err) {
+      container.innerHTML = '<p style="color:#c00">Erro ao carregar projetos.</p>';
+      console.error('[projetos] carregar:', err);
+    }
+  }
+
+  // ── TAREFAS / KANBAN ──────────────────────────────────────
+  async function adicionarTarefa() {
+    const titulo = document.getElementById('nova-tarefa-titulo').value.trim();
+    if (!titulo) return;
+    try {
+      await db.collection('tarefas').add({
+        titulo,
+        status: 'todo',
+        data_criacao: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      document.getElementById('nova-tarefa-titulo').value = '';
+      carregarTarefas();
+    } catch (err) { console.error('[tarefas] adicionar:', err); }
+  }
+
+  async function carregarTarefas() {
+    ['col-todo','col-doing','col-done'].forEach(colId => {
+      document.getElementById(colId).querySelectorAll('.card-kanban').forEach(c => c.remove());
+    });
+    try {
+      const snapshot = await db.collection('tarefas').orderBy('data_criacao', 'asc').get();
+      snapshot.forEach(doc => renderizarCartao(doc.id, doc.data()));
+    } catch (err) { console.error('[tarefas] carregar:', err); }
+  }
+
+  function renderizarCartao(id, dados) {
+    const mapa = { todo: 'col-todo', doing: 'col-doing', done: 'col-done' };
+    const col  = document.getElementById(mapa[dados.status] || 'col-todo');
+    const card = document.createElement('div');
+    card.className  = 'card-kanban';
+    card.draggable  = true;
+    card.dataset.id = id;
+    card.textContent = dados.titulo;
+    card.addEventListener('dragstart', () => { draggedId = id; });
+    col.appendChild(card);
+  }
+
+  async function soltarCartao(event, novoStatus) {
+    event.preventDefault();
+    if (!draggedId) return;
+    try {
+      await db.collection('tarefas').doc(draggedId).update({ status: novoStatus });
+      draggedId = null;
+      carregarTarefas();
+    } catch (err) { console.error('[tarefas] mover:', err); }
+  }
+
+  // ── NOTAS ─────────────────────────────────────────────────
+  function textoParaEditorJS(texto) {
+    const blocos = texto.split(/\n{2,}/).map(t => t.trim()).filter(Boolean);
+    return {
+      time: Date.now(),
+      version: '2.28.0',
+      blocks: blocos.map(p => ({ type: 'paragraph', data: { text: p.replace(/\n/g, '<br>') } }))
+    };
+  }
+
+  async function salvarNota() {
+    const titulo = document.getElementById('nota-titulo').value.trim();
+    const corpo  = document.getElementById('nota-corpo').value.trim();
+    if (!titulo || !corpo) { setStatus('status-nota', '⚠️ Preencha título e conteúdo.', 'err'); return; }
+    try {
+      await db.collection('notas_notion_like').add({
+        titulo,
+        conteudo:     textoParaEditorJS(corpo),
+        data_criacao: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setStatus('status-nota', '✅ Nota salva!');
+      document.getElementById('nota-titulo').value = '';
+      document.getElementById('nota-corpo').value  = '';
+      carregarNotas();
+    } catch (err) {
+      setStatus('status-nota', '❌ Erro ao salvar.', 'err');
+      console.error('[notas] salvar:', err);
+    }
+  }
+
+  async function excluirNota(id) {
+    if (!confirm('Excluir esta nota?')) return;
+    try {
+      await db.collection('notas_notion_like').doc(id).delete();
+      carregarNotas();
+    } catch (err) { console.error('[notas] excluir:', err); }
+  }
+
+  async function carregarNotas() {
+    const container = document.getElementById('lista-notas');
+    try {
+      const snapshot = await db.collection('notas_notion_like').orderBy('data_criacao', 'desc').get();
+      if (snapshot.empty) {
+        container.innerHTML = '<p style="color:#999;font-size:.875rem">Nenhuma nota ainda.</p>';
+        return;
+      }
+      container.innerHTML = '<h3 style="margin-bottom:.75rem;font-size:.9rem;color:#555">Notas salvas</h3>';
+      snapshot.forEach(doc => {
+        const n  = doc.data();
+        const ts = n.data_criacao?.toDate?.()?.toLocaleDateString('pt-BR') || '–';
+        const div = document.createElement('div');
+        div.className = 'item-nota';
+        div.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <h4>${n.titulo}</h4>
+            <button class="btn-perigo" onclick="excluirNota('${doc.id}')">Excluir</button>
+          </div>
+          <span>${ts} · ${n.conteudo?.blocks?.length || 0} bloco(s)</span>
+        `;
+        container.appendChild(div);
+      });
+    } catch (err) {
+      container.innerHTML = '<p style="color:#c00">Erro ao carregar notas.</p>';
+      console.error('[notas] carregar:', err);
+    }
+  }
+</script>
+</body>
+</html>

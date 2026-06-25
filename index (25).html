@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfólio – Renata Oliveira</title>
+
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: system-ui, sans-serif; background: #f5f5f5; color: #222; }
+
+    header { background: #1a1a2e; color: #fff; padding: 2rem; }
+    header img#foto-perfil { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin-bottom: 1rem; display: block; }
+    header h1 { font-size: 1.8rem; }
+    header p#bio { margin-top: .5rem; opacity: .85; }
+    header a#linkedin { display: inline-block; margin-top: .75rem; color: #90caf9; }
+
+    nav { background: #16213e; padding: .75rem 2rem; display: flex; gap: 1.5rem; }
+    nav a { color: #ccc; text-decoration: none; font-size: .9rem; }
+    nav a:hover { color: #fff; }
+
+    main { max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    section { margin-bottom: 3rem; }
+    section h2 { font-size: 1.3rem; border-bottom: 2px solid #1a1a2e; padding-bottom: .4rem; margin-bottom: 1.25rem; }
+
+    #lista-projetos { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1rem; }
+    .card-projeto { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1rem; }
+    .card-projeto h3 { font-size: 1rem; margin-bottom: .5rem; }
+    .card-projeto p  { font-size: .875rem; color: #555; margin-bottom: .75rem; }
+    .tags { display: flex; flex-wrap: wrap; gap: .35rem; margin-bottom: .75rem; }
+    .tag  { background: #e3e8ff; color: #3a4db7; font-size: .75rem; padding: .2rem .55rem; border-radius: 20px; }
+    .card-projeto a { font-size: .85rem; color: #1a1a2e; font-weight: 600; }
+
+    #container-notas { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 1.5rem; }
+    #container-notas h2 { font-size: 1.2rem; margin-bottom: .75rem; }
+    #container-notas p  { margin-bottom: .75rem; line-height: 1.6; }
+    #container-notas ul, #container-notas ol { margin: .75rem 0 .75rem 1.5rem; }
+    #container-notas li { margin-bottom: .35rem; }
+
+    .loading { color: #999; font-style: italic; font-size: .9rem; }
+    footer { text-align: center; padding: 2rem; color: #999; font-size: .8rem; }
+  </style>
+</head>
+<body>
+
+<header>
+  <img id="foto-perfil" src="" alt="Foto de perfil" style="display:none" />
+  <h1 id="nome">Carregando...</h1>
+  <p  id="bio"></p>
+  <a  id="linkedin" href="#" target="_blank" rel="noopener" style="display:none">LinkedIn →</a>
+</header>
+
+<nav>
+  <a href="#projetos">Projetos</a>
+  <a href="#notas">Notas</a>
+</nav>
+
+<main>
+  <section id="projetos">
+    <h2>Projetos</h2>
+    <div id="lista-projetos"><p class="loading">Carregando projetos...</p></div>
+  </section>
+
+  <section id="notas">
+    <h2>Notas de Estudo</h2>
+    <div id="container-notas"><p class="loading">Carregando notas...</p></div>
+  </section>
+</main>
+
+<footer><p>Portfólio de Renata Oliveira Nascimento</p></footer>
+
+<script>
+  // ── Inicializa Firebase ──────────────────────────────────
+  const firebaseConfig = {
+    apiKey: "AIzaSyA-mizRLLIB3EvWxs6Xa6hTHaeSQj9jPaw",
+    authDomain: "renata-d1eba.firebaseapp.com",
+    projectId: "renata-d1eba",
+    storageBucket: "renata-d1eba.firebasestorage.app",
+    messagingSenderId: "873732794860",
+    appId: "1:873732794860:web:48e9abff4afb87e16f78c9"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // ── 1. Perfil ────────────────────────────────────────────
+  async function carregarPerfil() {
+    try {
+      const doc = await db.collection('configuracoes_publicas').doc('info_pessoal').get();
+      if (!doc.exists) return;
+      const d = doc.data();
+      document.getElementById('nome').textContent = d.nome || '';
+      document.getElementById('bio').textContent  = d.bio_curta || '';
+      if (d.linkedin_url) {
+        const link = document.getElementById('linkedin');
+        link.href = d.linkedin_url;
+        link.style.display = 'inline-block';
+      }
+      if (d.foto_perfil_url) {
+        const img = document.getElementById('foto-perfil');
+        img.src = d.foto_perfil_url;
+        img.style.display = 'block';
+      }
+    } catch (err) { console.error('[vitrine] perfil:', err); }
+  }
+
+  // ── 2. Projetos ──────────────────────────────────────────
+  async function carregarProjetos() {
+    const container = document.getElementById('lista-projetos');
+    try {
+      const snapshot = await db.collection('projetos').get();
+      if (snapshot.empty) {
+        container.innerHTML = '<p class="loading">Nenhum projeto cadastrado ainda.</p>';
+        return;
+      }
+      container.innerHTML = '';
+      snapshot.forEach(doc => {
+        const p = doc.data();
+        const tags = (p.chips_tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+        const card = document.createElement('div');
+        card.className = 'card-projeto';
+        card.innerHTML = `
+          <h3>${p.titulo || ''}</h3>
+          <p>${p.descricao || ''}</p>
+          <div class="tags">${tags}</div>
+          ${p.url_projeto ? `<a href="${p.url_projeto}" target="_blank" rel="noopener">Ver projeto →</a>` : ''}
+        `;
+        container.appendChild(card);
+      });
+    } catch (err) {
+      container.innerHTML = '<p class="loading">Erro ao carregar projetos.</p>';
+      console.error('[vitrine] projetos:', err);
+    }
+  }
+
+  // ── 3. Notas (Editor.js JSON → HTML) ────────────────────
+  async function carregarNotas() {
+    const container = document.getElementById('container-notas');
+    try {
+      const snapshot = await db.collection('notas_notion_like')
+        .orderBy('data_criacao', 'desc').limit(1).get();
+      if (snapshot.empty) {
+        container.innerHTML = '<p class="loading">Nenhuma nota ainda.</p>';
+        return;
+      }
+      const nota = snapshot.docs[0].data();
+      const json  = nota.conteudo;
+      if (!json || !json.blocks) {
+        container.innerHTML = '<p class="loading">Nota sem conteúdo.</p>';
+        return;
+      }
+      container.innerHTML = nota.titulo ? `<h2>${nota.titulo}</h2>` : '';
+      json.blocks.forEach(block => {
+        let el;
+        switch (block.type) {
+          case 'header':
+            el = document.createElement(`h${block.data.level || 2}`);
+            el.innerHTML = block.data.text; break;
+          case 'paragraph':
+            el = document.createElement('p');
+            el.innerHTML = block.data.text; break;
+          case 'list':
+            el = document.createElement(block.data.style === 'ordered' ? 'ol' : 'ul');
+            (block.data.items || []).forEach(item => {
+              const li = document.createElement('li');
+              li.innerHTML = item;
+              el.appendChild(li);
+            }); break;
+          case 'image':
+            el = document.createElement('figure');
+            el.innerHTML = `<img src="${block.data.file?.url || ''}" alt="${block.data.caption || ''}" style="max-width:100%;border-radius:4px;" />
+              ${block.data.caption ? `<figcaption style="font-size:.8rem;color:#666;margin-top:.35rem">${block.data.caption}</figcaption>` : ''}`;
+            break;
+          case 'quote':
+            el = document.createElement('blockquote');
+            el.style.cssText = 'border-left:3px solid #1a1a2e;padding-left:1rem;color:#555;margin:.75rem 0';
+            el.innerHTML = `<p>${block.data.text}</p>${block.data.caption ? `<cite>— ${block.data.caption}</cite>` : ''}`;
+            break;
+          case 'delimiter':
+            el = document.createElement('hr');
+            el.style.margin = '1.5rem 0'; break;
+          default:
+            console.log('[vitrine] bloco não tratado:', block.type);
+            return;
+        }
+        if (el) container.appendChild(el);
+      });
+    } catch (err) {
+      container.innerHTML = '<p class="loading">Erro ao carregar notas.</p>';
+      console.error('[vitrine] notas:', err);
+    }
+  }
+
+  carregarPerfil();
+  carregarProjetos();
+  carregarNotas();
+</script>
+</body>
+</html>
