@@ -809,14 +809,14 @@
     </div>
     <div class="feed-body-wrapper sec-wrapper">
       <div class="feed-filtros" id="feed-filtros">
-        <button class="feed-chip ativo" data-tag="todos" onclick="filtrarFeed('todos',this)">Todos</button>
-        <button class="feed-chip" data-tag="law"          onclick="filtrarFeed('law',this)">Lei</button>
-        <button class="feed-chip" data-tag="privacy"      onclick="filtrarFeed('privacy',this)">Privacidade</button>
-        <button class="feed-chip" data-tag="criminology"  onclick="filtrarFeed('criminology',this)">Criminologia</button>
-        <button class="feed-chip" data-tag="rights"       onclick="filtrarFeed('rights',this)">Direitos</button>
-        <button class="feed-chip" data-tag="ai"           onclick="filtrarFeed('ai',this)">IA</button>
-        <button class="feed-chip" data-tag="brasil"        onclick="filtrarFeed('brasil',this)">Brasil</button>
-        <button class="feed-chip" data-tag="direito-br"    onclick="filtrarFeed('direito-br',this)">Direito BR</button>
+        <button class="feed-chip ativo" data-tag="todos"         onclick="filtrarFeed('todos',this)">Todos</button>
+        <button class="feed-chip" data-tag="direito-br"          onclick="filtrarFeed('direito-br',this)">Direito BR</button>
+        <button class="feed-chip" data-tag="criminologia-br"     onclick="filtrarFeed('criminologia-br',this)">Criminologia BR</button>
+        <button class="feed-chip" data-tag="politica-br"         onclick="filtrarFeed('politica-br',this)">Política BR</button>
+        <button class="feed-chip" data-tag="law"                 onclick="filtrarFeed('law',this)">Lei</button>
+        <button class="feed-chip" data-tag="privacy"             onclick="filtrarFeed('privacy',this)">Privacidade</button>
+        <button class="feed-chip" data-tag="rights"              onclick="filtrarFeed('rights',this)">Direitos</button>
+        <button class="feed-chip" data-tag="ai"                  onclick="filtrarFeed('ai',this)">IA</button>
       </div>
       <p id="feed-status">Carregando feed…</p>
       <div id="lista-feed">
@@ -1298,55 +1298,104 @@ animate();
     } catch(e) { /* silencioso — só roda uma vez */ }
   })();
 
-  /* ══ FEED — Hacker News ══════════════════════════════════ */
-  const FEED_KEYWORDS = {
-    law:         ['law','legal','court','judge','crime','criminal','legislation','regulation','statute','rights','justice','attorney','lawyer','prosecution','defense','verdict','constitutional'],
-    privacy:     ['privacy','surveillance','data','gdpr','tracking','biometric','facial','recognition','spyware','encryption','breach','leak'],
-    criminology: ['criminology','criminological','penology','recidivism','incarceration','prison','policing','forensic','homicide','victimology','drug war','mass incarceration'],
-    rights:      ['human rights','civil rights','civil liberties','due process','habeas','discrimination','lgbtq','racial','indigenous','disability','refugee','asylum'],
-    ai:          ['artificial intelligence','machine learning','llm','gpt','algorithm','bias','deepfake','automation','ai regulation','facial recognition']
+  /* ══ FEED — HN internacional + fontes BR ══════════════════ */
+
+  const FEED_KEYWORDS_EN = {
+    law:     ['law','legal','court','judge','crime','criminal','legislation','regulation','statute','justice','attorney','lawyer','prosecution','defense','verdict','constitutional'],
+    privacy: ['privacy','surveillance','data','gdpr','tracking','biometric','facial recognition','spyware','encryption','breach','leak'],
+    rights:  ['human rights','civil rights','civil liberties','due process','habeas','discrimination','lgbtq','racial','indigenous','disability','refugee','asylum'],
+    ai:      ['artificial intelligence','machine learning','llm','gpt','algorithm','bias','deepfake','automation','ai regulation'],
   };
 
-  let _feedItens = [];
+  const FEED_KEYWORDS_BR = {
+    'direito-br':      ['direito','tribunal','stf','stj','supremo','sentença','pena','réu','processo','advogado','defensoria','ministério público','juiz','legislação','código penal','constituição','oab','vara','habeas corpus','ação penal','recurso','acórdão'],
+    'criminologia-br': ['crime','criminologia','preso','presídio','homicídio','tráfico','drogas','segurança pública','violência','polícia','investigação','flagrante','inquérito','delegacia','feminicídio','encarceramento','reincidência'],
+    'politica-br':     ['congresso','câmara','senado','governo','presidência','ministério','lei aprovada','projeto de lei','votação','deputado','senador','reforma','emenda','constituição federal'],
+  };
+
+  const FONTES_BR = [
+    { nome: 'Conjur',         url: 'https://www.conjur.com.br/rss.xml' },
+    { nome: 'JOTA',           url: 'https://www.jota.info/feed' },
+    { nome: 'Ag. Brasil',     url: 'https://agenciabrasil.ebc.com.br/rss/justica/feed.xml' },
+    { nome: 'STF',            url: 'https://portal.stf.jus.br/rss/noticia.asp' },
+  ];
+
+  let _feedItens    = [];
   let _feedTagAtiva = 'todos';
 
-  function _tagDoItem(titulo) {
+  function _tagEN(titulo) {
     const t = titulo.toLowerCase();
-    for (const [tag, words] of Object.entries(FEED_KEYWORDS)) {
+    for (const [tag, words] of Object.entries(FEED_KEYWORDS_EN)) {
       if (words.some(w => t.includes(w))) return tag;
     }
     return null;
   }
 
-  async function carregarFeed() {
-    const status = document.getElementById('feed-status');
+  function _tagBR(titulo) {
+    const t = titulo.toLowerCase();
+    for (const [tag, words] of Object.entries(FEED_KEYWORDS_BR)) {
+      if (words.some(w => t.includes(w))) return tag;
+    }
+    return 'direito-br';
+  }
+
+  async function carregarHN() {
     try {
-      // Busca top 200 IDs do HN
       const ids = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json')
         .then(r => r.json());
-
-      // Busca os primeiros 200 em paralelo
-      const slice = ids.slice(0, 200);
       const itens = await Promise.all(
-        slice.map(id =>
+        ids.slice(0, 200).map(id =>
           fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`)
-            .then(r => r.json())
-            .catch(() => null)
+            .then(r => r.json()).catch(() => null)
         )
       );
-
-      // Filtra por keywords e normaliza
-      _feedItens = itens
+      return itens
         .filter(i => i && i.title && i.url)
-        .map(i => ({ ...i, _tag: _tagDoItem(i.title) }))
+        .map(i => ({ ...i, _tag: _tagEN(i.title), _fonte: 'HN' }))
         .filter(i => i._tag !== null)
         .sort((a, b) => b.score - a.score)
-        .slice(0, 30);
+        .slice(0, 25);
+    } catch(e) { return []; }
+  }
 
-      status.textContent = '';
-    } catch(e) {
-      status.textContent = 'Feed indisponível no momento.';
-    }
+  async function carregarFontesBR() {
+    const proxy = 'https://api.rss2json.com/v1/api.json?rss_url=';
+    const todos = [];
+    await Promise.all(FONTES_BR.map(async fonte => {
+      try {
+        const res = await fetch(proxy + encodeURIComponent(fonte.url)).then(r => r.json());
+        if (res.status !== 'ok') return;
+        (res.items || []).slice(0, 12).forEach(item => {
+          const pubDate = item.pubDate
+            ? new Date(item.pubDate).getTime() / 1000
+            : Date.now() / 1000;
+          todos.push({
+            title:  item.title || '',
+            url:    item.link  || item.guid || '',
+            score:  null,
+            time:   pubDate,
+            _tag:   _tagBR(item.title || ''),
+            _fonte: fonte.nome,
+          });
+        });
+      } catch(e) { /* fonte indisponível */ }
+    }));
+    return todos;
+  }
+
+  async function carregarFeed() {
+    const status = document.getElementById('feed-status');
+    status.textContent = 'Carregando…';
+
+    const [itenHN, itensBR] = await Promise.all([carregarHN(), carregarFontesBR()]);
+
+    _feedItens = [
+      ...itenHN,
+      ...itensBR.sort((a, b) => b.time - a.time),
+    ];
+
+    status.textContent = _feedItens.length ? '' : 'Nenhuma notícia disponível.';
+    renderizarFeed();
   }
 
   function renderizarFeed() {
@@ -1360,82 +1409,32 @@ animate();
       return;
     }
 
-    const nomes = { law:'lei', privacy:'privacidade', criminology:'criminologia', rights:'direitos', ai:'ia', brasil:'brasil', 'direito-br':'direito br' };
+    const nomes = {
+      law:              'lei',
+      privacy:          'privacidade',
+      rights:           'direitos',
+      ai:               'ia',
+      'direito-br':     'direito br',
+      'criminologia-br':'criminologia br',
+      'politica-br':    'política br',
+    };
+
     const ago = ts => {
-      const h = Math.floor((Date.now()/1000 - ts) / 3600);
-      return h < 1 ? 'agora' : h < 24 ? `${h}h atrás` : `${Math.floor(h/24)}d atrás`;
+      const h = Math.floor((Date.now() / 1000 - ts) / 3600);
+      return h < 1 ? 'agora' : h < 24 ? `${h}h atrás` : `${Math.floor(h / 24)}d atrás`;
     };
 
     c.innerHTML = visiveis.map(i => `
       <div class="feed-item">
-        <span class="feed-score">${i.score !== null ? i.score : '—'}</span>
+        <span class="feed-score">${i.score !== null && i.score !== undefined ? i.score : '—'}</span>
         <div>
           <a class="feed-titulo" href="${i.url}" target="_blank" rel="noopener">${i.title}</a>
-          <span class="feed-tag">${nomes[i._tag]||i._tag}${i._fonte ? ' · '+i._fonte : ''}</span>
+          <span class="feed-tag">${nomes[i._tag] || i._tag} · ${i._fonte}</span>
         </div>
         <span class="feed-meta">${ago(i.time)}</span>
       </div>`).join('');
   }
 
-  /* ── Feed brasileiro — RSS via rss2json ── */
-  const FONTES_BR = [
-    {
-      nome: 'Conjur',
-      url:  'https://www.conjur.com.br/rss.xml',
-      tags_fixas: ['direito-br']
-    },
-    {
-      nome: 'JOTA',
-      url:  'https://www.jota.info/feed',
-      tags_fixas: ['direito-br']
-    },
-    {
-      nome: 'Agência Brasil',
-      url:  'https://agenciabrasil.ebc.com.br/rss/justica/feed.xml',
-      tags_fixas: ['brasil']
-    }
-  ];
-
-  const KEYWORDS_BR = {
-    'direito-br': ['direito','tribunal','stf','stj','supremo','sentença','pena','réu','processo','advogado','defensoria','ministério público','juiz','legislação','código penal','constituição','ibccrim','criminologia'],
-    'brasil':     ['brasil','brasileira','governo','congresso','câmara','senado','política','ministério','federal','estado','município','salvador','bahia']
-  };
-
-  function _tagBR(titulo) {
-    const t = titulo.toLowerCase();
-    for (const [tag, words] of Object.entries(KEYWORDS_BR)) {
-      if (words.some(w => t.includes(w))) return tag;
-    }
-    // itens das fontes BR sem keyword específica ficam como 'brasil'
-    return 'brasil';
-  }
-
-  async function carregarFeedBR() {
-    const proxy = 'https://api.rss2json.com/v1/api.json?rss_url=';
-    const itensBR = [];
-
-    await Promise.all(FONTES_BR.map(async fonte => {
-      try {
-        const res  = await fetch(proxy + encodeURIComponent(fonte.url)).then(r => r.json());
-        const itens = (res.items || []).slice(0, 10);
-        itens.forEach(item => {
-          const pubDate = item.pubDate ? new Date(item.pubDate).getTime() / 1000 : Date.now() / 1000;
-          itensBR.push({
-            title:  item.title || '',
-            url:    item.link  || item.guid || '',
-            score:  null,           // sem pontuação — fonte editorial
-            time:   pubDate,
-            _tag:   _tagBR(item.title || ''),
-            _fonte: fonte.nome
-          });
-        });
-      } catch(e) { /* fonte indisponível — silencioso */ }
-    }));
-
-    if (itensBR.length) {
-      _feedItens = [..._feedItens, ...itensBR];
-    }
-  }
   function filtrarFeed(tag, btn) {
     _feedTagAtiva = tag;
     document.querySelectorAll('.feed-chip').forEach(b => b.classList.remove('ativo'));
@@ -1443,16 +1442,7 @@ animate();
     renderizarFeed();
   }
 
- // HN carrega e renderiza logo
-  // BR carrega depois e atualiza a lista
-  carregarFeed().then(() => {
-    renderizarFeed();
-    // BR carrega em seguida e re-renderiza quando chegar
-    carregarFeedBR().then(() => {
-      _feedItens.sort((a, b) => b.time - a.time);
-      renderizarFeed();
-    });
-  });
+  carregarFeed();
 
   carregarPerfil();
   carregarProjetos();
