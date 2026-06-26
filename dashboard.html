@@ -689,6 +689,58 @@
       color: rgba(237,229,206,0.4);
       white-space: nowrap;
     }
+
+    /* ── Barra de coleções ── */
+    .ref-colecoes-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+      margin-bottom: 1.1rem;
+      padding-bottom: 1.1rem;
+      border-bottom: 1px solid var(--dash-border);
+    }
+    .ref-colecao-chip {
+      font-family: 'Syne', sans-serif;
+      font-size: .62rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      padding: .42rem .9rem;
+      border: 1px solid rgba(232,184,32,0.25);
+      background: rgba(255,255,255,0.03);
+      color: var(--creme-dk);
+      cursor: pointer;
+      transition: all .15s;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+    }
+    .ref-colecao-chip:hover { border-color: var(--ouro-lt); color: var(--creme); }
+    .ref-colecao-chip.ativo { background: var(--ouro); color: var(--tinta); border-color: var(--ouro-lt); }
+    .ref-colecao-chip .cont {
+      font-family: 'DM Mono', monospace;
+      font-size: .9em;
+      opacity: .65;
+    }
+    .ref-colecao-chip .col-del {
+      opacity: .4;
+      font-size: .85em;
+      margin-left: .15rem;
+    }
+    .ref-colecao-chip .col-del:hover { opacity: 1; }
+    .ref-colecao-nova {
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .06em;
+      padding: .42rem .9rem;
+      border: 1px dashed rgba(232,184,32,0.45);
+      background: none;
+      color: var(--ouro-lt);
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .ref-colecao-nova:hover { background: rgba(232,184,32,0.1); }
+
     .ref-doi-box {
       background: rgba(232,184,32,0.07);
       border: 1px solid rgba(232,184,32,0.22);
@@ -1238,6 +1290,7 @@
       </div>
   </div>
   <!-- FIM SEMESTRE -->
+
   <!-- ══ REFERÊNCIAS BIBLIOGRÁFICAS ══════════════════════════ -->
   <div id="bloco-referencias">
     <div class="sem-header">
@@ -1247,6 +1300,9 @@
       </div>
       <span id="ref-contador">0 referência(s)</span>
     </div>
+
+    <!-- Barra de coleções (Direito Digital, Direito de Família…) -->
+    <div class="ref-colecoes-bar" id="ref-colecoes-bar"></div>
 
     <!-- HERO: importar por DOI -->
     <div class="ref-doi-box">
@@ -1281,6 +1337,7 @@
           <option value="evento">Trabalho em evento</option>
           <option value="site">Site / Página web</option>
         </select>
+        <select class="sem-input" id="ref-colecao"></select>
         <input class="sem-input" id="ref-tags" placeholder="tags: penal, tcc, mestrado"/>
         <input class="sem-input ref-col2" id="ref-autores" placeholder="SOBRENOME, Nome; SOBRENOME, Nome"/>
         <input class="sem-input ref-col2" id="ref-titulo" placeholder="Título"/>
@@ -1299,7 +1356,7 @@
       <button class="sem-btn-sm" onclick="adicionarReferencia()">Salvar referência</button>
     </details>
 
-    <!-- Busca + filtro -->
+    <!-- Busca + filtro de tags -->
     <div class="ref-busca-row">
       <input class="sem-input" id="ref-busca" placeholder="Buscar por autor, título, ano…" oninput="renderReferencias()"/>
     </div>
@@ -1413,6 +1470,7 @@
   </div><!-- #modo-portfolio -->
 
 </div><!-- #dashboard -->
+
 <!-- ══════════════════════════════════════════════════════════
      JAVASCRIPT
 ══════════════════════════════════════════════════════════ -->
@@ -1441,6 +1499,7 @@
     setTimeout(() => { el.textContent = ''; }, 4000);
   }
   const fmt = v => 'R$ ' + Number(v).toFixed(2).replace('.', ',');
+  const escAttr = s => String(s || '').replace(/'/g, "\\'");
 
   /* ── Auth ───────────────────────────────────────────────── */
   async function fazerLogin() {
@@ -1481,7 +1540,7 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  /* ── Abas principais ────────────────────────────────────── */
+  /* ── Abas principais (portfólio) ────────────────────────── */
   function mudarAba(nome, btn) {
     document.querySelectorAll('.painel').forEach(p => p.classList.remove('ativo'));
     document.querySelectorAll('.aba').forEach(b => b.classList.remove('ativa'));
@@ -1858,7 +1917,6 @@
   }
   async function salvarCarreira() {
     await semSet('carreira', { plano: document.getElementById('carr-plano').value });
-    setStatus('status-perfil', ''); /* reutiliza nenhum status dedicado — silencioso */
   }
   async function adicionarConcurso() {
     const nome = document.getElementById('conc-nome').value.trim();
@@ -1934,6 +1992,7 @@
     ['lem-texto','lem-data'].forEach(id => document.getElementById(id).value = '');
     carregarLembretes();
   }
+
   /* ── Blocos livres (anotações avulsas por painel) ── */
   async function carregarBlocosLivres(painel) {
     const c = document.getElementById('blocos-livres-' + painel);
@@ -1946,7 +2005,6 @@
         <span class="bl-del" onclick="semDel('blocos_${painel}','${b.id}').then(()=>carregarBlocosLivres('${painel}'))">✕</span>
       </div>`).join('');
   }
-
   async function adicionarBlocoLivre(painel) {
     const titulo = document.getElementById('bl-titulo-' + painel).value.trim();
     const corpo  = document.getElementById('bl-corpo-'  + painel).value.trim();
@@ -1957,173 +2015,99 @@
     carregarBlocosLivres(painel);
   }
 
-  function rotuloTipo(t) {
-    return ({artigo:'Artigo', livro:'Livro', capitulo:'Cap. de livro', tese:'Tese/Diss.', evento:'Trab. em evento', site:'Site'})[t] || 'Referência';
-  }
-
-  function formatarABNT(r) {
-    const A = (r.autores||'').trim();
-    const T = (r.titulo||'').trim();
-    const ano = r.ano || 's.d.';
-    const local = r.local || '[s.l.]';
-    const b = s => `<strong>${s}</strong>`;
-    switch (r.tipo) {
-      case 'livro':
-        return `${A}. ${b(T)}. ${local}: ${r.editora||'[s.n.]'}, ${ano}.`;
-      case 'capitulo':
-        return `${A}. ${T}. In: ${b(r.veiculo||'')}. ${local}: ${r.editora||'[s.n.]'}, ${ano}.${r.paginas?` p. ${r.paginas}.`:''}`;
-      case 'tese':
-        return `${A}. ${b(T)}. ${ano}. ${r.veiculo||'Tese/Dissertação'} – ${r.editora||''}, ${local}, ${ano}.`;
-      case 'evento':
-        return `${A}. ${T}. In: ${b(r.veiculo||'')}, ${ano}, ${local}. Anais [...]. ${local}: ${r.editora||'[s.n.]'}, ${ano}.${r.paginas?` p. ${r.paginas}.`:''}`;
-      case 'site':
-        return `${A}${A?'. ':''}${b(T)}. ${r.veiculo?r.veiculo+'. ':''}${ano}. Disponível em: ${r.url||''}. Acesso em: ${r.acesso||'__ ___. ____'}.`;
-      case 'artigo':
-      default:
-        return `${A}. ${T}. ${b(r.veiculo||'')}, ${local}, ${r.volume?`v. ${r.volume}, `:''}${r.numero?`n. ${r.numero}, `:''}${r.paginas?`p. ${r.paginas}, `:''}${ano}.`;
-    }
-  }
-
-  function formatarBibTeX(r) {
-    const map = {artigo:'article', livro:'book', capitulo:'incollection', tese:'phdthesis', evento:'inproceedings', site:'misc'};
-    const tipo = map[r.tipo] || 'misc';
-    const prim = (r.autores||'ref').split(/[ ,;]/)[0].toLowerCase().replace(/[^a-z]/g,'') || 'ref';
-    const key  = prim + (r.ano||'');
-    const auth = (r.autores||'').replace(/;/g,' and ');
-    const L = [`  author = {${auth}}`, `  title = {${r.titulo||''}}`, `  year = {${r.ano||''}}`];
-    if (r.veiculo) L.push(r.tipo==='artigo' ? `  journal = {${r.veiculo}}` : `  booktitle = {${r.veiculo}}`);
-    if (r.editora) L.push(`  publisher = {${r.editora}}`);
-    if (r.volume)  L.push(`  volume = {${r.volume}}`);
-    if (r.numero)  L.push(`  number = {${r.numero}}`);
-    if (r.paginas) L.push(`  pages = {${r.paginas}}`);
-    if (r.doi)     L.push(`  doi = {${r.doi}}`);
-    if (r.url)     L.push(`  url = {${r.url}}`);
-    return `@${tipo}{${key},\n${L.join(',\n')}\n}`;
-  }
-
-  function renderReferencias() {
-    const c = document.getElementById('lista-referencias');
-    if (!c) return;
-    const busca = (document.getElementById('ref-busca')?.value || '').toLowerCase();
-    let itens = _refsCache;
-    if (_refTagFiltro !== 'todos') itens = itens.filter(r => (r.tags||[]).includes(_refTagFiltro));
-    if (busca) itens = itens.filter(r =>
-      (`${r.titulo||''} ${r.autores||''} ${r.ano||''} ${r.veiculo||''}`).toLowerCase().includes(busca));
-    document.getElementById('ref-contador').textContent = itens.length + ' referência(s)';
-    if (!itens.length) { c.innerHTML = '<p style="color:rgba(237,229,206,0.3);font-size:.8rem">Nenhuma referência.</p>'; return; }
-    c.innerHTML = itens.map(r => `
-      <div class="ref-item">
-        <span class="ref-tipo">${rotuloTipo(r.tipo)}</span>
-        <div class="ref-abnt">${formatarABNT(r)}</div>
-        ${r.nota ? `<div class="ref-nota">${r.nota}</div>` : ''}
-        ${(r.tags||[]).length ? `<div style="margin-top:.4rem">${(r.tags||[]).map(t=>`<span class="sem-tag">${t}</span>`).join('')}</div>` : ''}
-        <div class="ref-acoes">
-          <button class="ref-btn" onclick="copiarRef('${r.id}','abnt')">Copiar ABNT</button>
-          <button class="ref-btn" onclick="copiarRef('${r.id}','bibtex')">BibTeX</button>
-          ${r.doi ? `<a class="ref-btn" href="https://doi.org/${r.doi}" target="_blank" rel="noopener">DOI ↗</a>` : ''}
-          <button class="ref-btn perigo" onclick="excluirReferencia('${r.id}')">Excluir</button>
-        </div>
-      </div>`).join('');
-  }
-
-  function renderRefTags() {
-    const cont = document.getElementById('ref-tag-filtros');
-    if (!cont) return;
-    const todas = [...new Set(_refsCache.flatMap(r => r.tags||[]))].sort();
-    cont.innerHTML =
-      `<button class="feed-chip-ref ${_refTagFiltro==='todos'?'ativo':''}" onclick="filtrarRefTag('todos')">Todas</button>` +
-      todas.map(t => `<button class="feed-chip-ref ${_refTagFiltro===t?'ativo':''}" onclick="filtrarRefTag('${t}')">${t}</button>`).join('');
-  }
-
-  function filtrarRefTag(t) { _refTagFiltro = t; renderRefTags(); renderReferencias(); }
-
-  async function importarDOI() {
-    const bruto = document.getElementById('ref-doi-input').value.trim();
-    const doi = bruto.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '');
-    if (!doi) { setStatus('status-ref', '⚠ Cole um DOI.', 'err'); return; }
-    setStatus('status-ref', 'Buscando no CrossRef…');
-    try {
-      const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
-      if (!res.ok) throw new Error('não encontrado');
-      const m = (await res.json()).message;
-      const autores = (m.author||[])
-        .map(a => `${(a.family||'').toUpperCase()}, ${a.given||''}`.trim().replace(/,\s*$/, ''))
-        .join('; ');
-      const tipoMap = {'journal-article':'artigo','book':'livro','book-chapter':'capitulo','proceedings-article':'evento','dissertation':'tese'};
-      const ano = m.published?.['date-parts']?.[0]?.[0]
-               || m['published-print']?.['date-parts']?.[0]?.[0]
-               || m['published-online']?.['date-parts']?.[0]?.[0] || '';
-      const set = (id, v) => { const e = document.getElementById(id); if (e) e.value = v || ''; };
-      set('ref-tipo', tipoMap[m.type] || 'artigo');
-      set('ref-autores', autores);
-      set('ref-titulo', (m.title||[''])[0]);
-      set('ref-ano', ano);
-      set('ref-veiculo', (m['container-title']||[''])[0]);
-      set('ref-volume', m.volume);
-      set('ref-numero', m.issue);
-      set('ref-paginas', m.page);
-      set('ref-editora', m.publisher);
-      set('ref-doi', m.DOI || doi);
-      set('ref-url', m.URL);
-      document.getElementById('ref-manual').open = true;
-      setStatus('status-ref', '✓ Dados preenchidos. Confira e salve.');
-    } catch(e) {
-      setStatus('status-ref', '✗ DOI não encontrado. Preencha manualmente.', 'err');
-      document.getElementById('ref-manual').open = true;
-    }
-  }
-
-  async function adicionarReferencia() {
-    const titulo = document.getElementById('ref-titulo').value.trim();
-    if (!titulo) { setStatus('status-ref', '⚠ Título obrigatório.', 'err'); return; }
-    const tags = document.getElementById('ref-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
-    const g = id => document.getElementById(id).value.trim();
-    try {
-      await db.collection('referencias').add({
-        tipo: g('ref-tipo'), autores: g('ref-autores'), titulo,
-        ano: g('ref-ano'), veiculo: g('ref-veiculo'), volume: g('ref-volume'),
-        numero: g('ref-numero'), paginas: g('ref-paginas'), local: g('ref-local'),
-        editora: g('ref-editora'), doi: g('ref-doi'), url: g('ref-url'),
-        acesso: g('ref-acesso'), nota: g('ref-nota'), tags,
-        ordem: -Date.now(),
-        criado: new Date(),
-      });
-      setStatus('status-ref', '✓ Referência salva.');
-      ['ref-doi-input','ref-autores','ref-titulo','ref-ano','ref-veiculo','ref-volume','ref-numero','ref-paginas','ref-local','ref-editora','ref-doi','ref-url','ref-acesso','ref-nota','ref-tags']
-        .forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
-      carregarReferencias();
-    } catch(e) { setStatus('status-ref', '✗ ' + (e.code || e.message), 'err'); }
-  }
-
-  async function excluirReferencia(id) {
-    if (!confirm('Excluir esta referência?')) return;
-    await db.collection('referencias').doc(id).delete();
-    carregarReferencias();
-  }
-
-  function copiarRef(id, formato) {
-    const r = _refsCache.find(x => x.id === id);
-    if (!r) return;
-    const txt = formato === 'bibtex'
-      ? formatarBibTeX(r)
-      : formatarABNT(r).replace(/<[^>]+>/g, '');
-    navigator.clipboard.writeText(txt).then(() => {
-      setStatus('status-ref', formato === 'bibtex'
-        ? '✓ BibTeX copiado.'
-        : '✓ ABNT copiada (lembre de destacar em negrito o título da obra).');
-    }).catch(() => setStatus('status-ref', '✗ Não consegui copiar.', 'err'));
-  }
-
-  /* ══ REFERÊNCIAS BIBLIOGRÁFICAS ════════════════════════════ */
-  let _refsCache = [];
-  let _refTagFiltro = 'todos';
-  let _refSortable = null;
+  /* ══════════════════════════════════════════════════════════
+     REFERÊNCIAS BIBLIOGRÁFICAS (versão única e limpa)
+  ══════════════════════════════════════════════════════════ */
+  let _refsCache      = [];
+  let _colecoesRef    = [];          // nomes das coleções criadas pela usuária
+  let _refTagFiltro   = 'todos';
+  let _refColecaoFiltro = 'todas';   // 'todas' | '__sem__' | nome da coleção
+  let _refSortable    = null;
 
   const _tsMillis = v => v?.toMillis?.() ?? (v instanceof Date ? v.getTime() : 0);
+  const SEM_COLECAO = '__sem__';
 
+  /* ── Coleções ─────────────────────────────────────────── */
+  async function carregarColecoesRef() {
+    const cfg = await semGetDoc('ref_colecoes');
+    _colecoesRef = Array.isArray(cfg.lista) ? cfg.lista : [];
+    renderColecoesBar();
+    popularSelectColecao();
+  }
+
+  async function criarColecao() {
+    const nome = (prompt('Nome da nova coleção (ex: Direito Digital):') || '').trim();
+    if (!nome) return;
+    if (_colecoesRef.some(c => c.toLowerCase() === nome.toLowerCase())) {
+      setStatus('status-ref', '⚠ Já existe uma coleção com esse nome.', 'err'); return;
+    }
+    _colecoesRef.push(nome);
+    await semSet('ref_colecoes', { lista: _colecoesRef });
+    renderColecoesBar();
+    popularSelectColecao();
+    setStatus('status-ref', '✓ Coleção "' + nome + '" criada.');
+  }
+
+  async function excluirColecao(nome) {
+    if (!confirm('Excluir a coleção "' + nome + '"?\nAs referências dela NÃO serão apagadas — ficarão sem coleção.')) return;
+    _colecoesRef = _colecoesRef.filter(c => c !== nome);
+    await semSet('ref_colecoes', { lista: _colecoesRef });
+    if (_refColecaoFiltro === nome) _refColecaoFiltro = 'todas';
+    renderColecoesBar();
+    popularSelectColecao();
+    renderReferencias();
+  }
+
+  function _contagemColecao(nome) {
+    if (nome === 'todas') return _refsCache.length;
+    if (nome === SEM_COLECAO) return _refsCache.filter(r => !r.colecao || !_colecoesRef.includes(r.colecao)).length;
+    return _refsCache.filter(r => r.colecao === nome).length;
+  }
+
+  function renderColecoesBar() {
+    const bar = document.getElementById('ref-colecoes-bar');
+    if (!bar) return;
+    const temSem = _refsCache.some(r => !r.colecao || !_colecoesRef.includes(r.colecao));
+    let html = `<button class="ref-colecao-chip ${_refColecaoFiltro==='todas'?'ativo':''}" onclick="filtrarColecao('todas')">Todas <span class="cont">${_contagemColecao('todas')}</span></button>`;
+    html += _colecoesRef.map(nome => `
+      <button class="ref-colecao-chip ${_refColecaoFiltro===nome?'ativo':''}" onclick="filtrarColecao('${escAttr(nome)}')">
+        ${nome} <span class="cont">${_contagemColecao(nome)}</span>
+        <span class="col-del" title="Excluir coleção" onclick="event.stopPropagation();excluirColecao('${escAttr(nome)}')">✕</span>
+      </button>`).join('');
+    if (temSem) {
+      html += `<button class="ref-colecao-chip ${_refColecaoFiltro===SEM_COLECAO?'ativo':''}" onclick="filtrarColecao('${SEM_COLECAO}')">Sem coleção <span class="cont">${_contagemColecao(SEM_COLECAO)}</span></button>`;
+    }
+    html += `<button class="ref-colecao-nova" onclick="criarColecao()">+ Nova coleção</button>`;
+    bar.innerHTML = html;
+  }
+
+  function popularSelectColecao() {
+    const sel = document.getElementById('ref-colecao');
+    if (!sel) return;
+    const atual = sel.value;
+    let opts = `<option value="">— sem coleção —</option>`;
+    opts += _colecoesRef.map(n => `<option value="${n.replace(/"/g,'&quot;')}">${n}</option>`).join('');
+    sel.innerHTML = opts;
+    // pré-seleciona a coleção do filtro ativo, se for uma coleção real
+    if (_refColecaoFiltro !== 'todas' && _refColecaoFiltro !== SEM_COLECAO && _colecoesRef.includes(_refColecaoFiltro)) {
+      sel.value = _refColecaoFiltro;
+    } else if (atual && _colecoesRef.includes(atual)) {
+      sel.value = atual;
+    }
+  }
+
+  function filtrarColecao(nome) {
+    _refColecaoFiltro = nome;
+    renderColecoesBar();
+    popularSelectColecao();
+    renderReferencias();
+  }
+
+  /* ── Carregar / ordenar ───────────────────────────────── */
   async function carregarReferencias() {
     const c = document.getElementById('lista-referencias');
     if (!c) return;
+    await carregarColecoesRef();
     try {
       const snap = await db.collection('referencias').get();
       _refsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -2134,9 +2118,9 @@
         return _tsMillis(b.criado) - _tsMillis(a.criado);
       });
     } catch(e) { _refsCache = []; console.error('[refs]', e); }
+    renderColecoesBar();
     renderRefTags();
     renderReferencias();
-    // inicializa o arrastar uma única vez
     if (window.Sortable && !_refSortable) {
       _refSortable = Sortable.create(c, {
         handle: '.ref-grip',
@@ -2159,6 +2143,53 @@
     catch(e) { setStatus('status-ref', '✗ Erro ao salvar ordem.', 'err'); }
   }
 
+  /* ── Importação por DOI (CrossRef) ────────────────────── */
+  async function importarDOI() {
+    const bruto = document.getElementById('ref-doi-input').value.trim();
+    const doi = bruto.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '');
+    if (!doi) { setStatus('status-ref', '⚠ Cole um DOI.', 'err'); return; }
+    setStatus('status-ref', 'Buscando no CrossRef…');
+    try {
+      const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
+      if (!res.ok) throw new Error('não encontrado');
+      const m = (await res.json()).message;
+      const autores = (m.author||[]).map(a => {
+        let family = (a.family || '').trim();
+        let given  = (a.given  || '').trim();
+        // Sobrenome composto sem prenome (ex: "Oliveira Mendonça"):
+        // pela convenção ABNT, só a última palavra entra em caixa alta.
+        if (!given && family.includes(' ')) {
+          const partes = family.split(/\s+/);
+          family = partes.pop();
+          given  = partes.join(' ');
+        }
+        return `${family.toUpperCase()}${given ? ', ' + given : ''}`;
+      }).join('; ');
+      const tipoMap = {'journal-article':'artigo','book':'livro','book-chapter':'capitulo','proceedings-article':'evento','dissertation':'tese'};
+      const ano = m.published?.['date-parts']?.[0]?.[0]
+               || m['published-print']?.['date-parts']?.[0]?.[0]
+               || m['published-online']?.['date-parts']?.[0]?.[0] || '';
+      const set = (id, v) => { const e = document.getElementById(id); if (e) e.value = v || ''; };
+      set('ref-tipo', tipoMap[m.type] || 'artigo');
+      set('ref-autores', autores);
+      set('ref-titulo', (m.title||[''])[0]);
+      set('ref-ano', ano);
+      set('ref-veiculo', (m['container-title']||[''])[0]);
+      set('ref-volume', m.volume);
+      set('ref-numero', m.issue);
+      set('ref-paginas', m.page);
+      set('ref-editora', m.publisher);
+      set('ref-doi', m.DOI || doi);
+      set('ref-url', m.URL);
+      document.getElementById('ref-manual').open = true;
+      setStatus('status-ref', '✓ Dados preenchidos. Confira e salve.');
+    } catch(e) {
+      setStatus('status-ref', '✗ DOI não encontrado. Preencha manualmente.', 'err');
+      document.getElementById('ref-manual').open = true;
+    }
+  }
+
+  /* ── Importação por ISBN (Open Library) ───────────────── */
   async function importarISBN() {
     const isbn = document.getElementById('ref-isbn-input').value.trim().replace(/[-\s]/g, '');
     if (!isbn) { setStatus('status-ref', '⚠ Cole um ISBN.', 'err'); return; }
@@ -2169,11 +2200,19 @@
       const livro = data[`ISBN:${isbn}`];
       if (!livro) throw new Error('não encontrado');
       const autores = (livro.authors || []).map(a => {
-        const partes = (a.name || '').trim().split(/\s+/);
-        if (partes.length < 2) return (a.name || '').toUpperCase();
+        let nome = (a.name || '').trim();
+        if (!nome) return '';
+        // Já vem invertido "Sobrenome, Nome"? respeita o que o catálogo separou.
+        if (nome.includes(',')) {
+          const [fam, ...resto] = nome.split(',');
+          return `${fam.trim().toUpperCase()}${resto.length ? ', ' + resto.join(',').trim() : ''}`;
+        }
+        // Senão, última palavra = sobrenome (convenção ABNT).
+        const partes = nome.split(/\s+/);
+        if (partes.length < 2) return nome.toUpperCase();
         const sobren = partes.pop().toUpperCase();
         return `${sobren}, ${partes.join(' ')}`;
-      }).join('; ');
+      }).filter(Boolean).join('; ');
       const ano = (livro.publish_date || '').match(/\d{4}/)?.[0] || '';
       const set = (id, v) => { const e = document.getElementById(id); if (e) e.value = v || ''; };
       set('ref-tipo', 'livro');
@@ -2192,6 +2231,7 @@
     }
   }
 
+  /* ── Formatação ───────────────────────────────────────── */
   function rotuloTipo(t) {
     return ({artigo:'Artigo', livro:'Livro', capitulo:'Cap. de livro', tese:'Tese/Diss.', evento:'Trab. em evento', site:'Site'})[t] || 'Referência';
   }
@@ -2236,22 +2276,36 @@
     return `@${tipo}{${key},\n${L.join(',\n')}\n}`;
   }
 
+  /* ── Render da lista ──────────────────────────────────── */
   function renderReferencias() {
     const c = document.getElementById('lista-referencias');
     if (!c) return;
     const busca = (document.getElementById('ref-busca')?.value || '').toLowerCase();
     let itens = _refsCache;
+
+    // filtro por coleção
+    if (_refColecaoFiltro === SEM_COLECAO) {
+      itens = itens.filter(r => !r.colecao || !_colecoesRef.includes(r.colecao));
+    } else if (_refColecaoFiltro !== 'todas') {
+      itens = itens.filter(r => r.colecao === _refColecaoFiltro);
+    }
+    // filtro por tag
     if (_refTagFiltro !== 'todos') itens = itens.filter(r => (r.tags||[]).includes(_refTagFiltro));
+    // busca textual
     if (busca) itens = itens.filter(r =>
       (`${r.titulo||''} ${r.autores||''} ${r.ano||''} ${r.veiculo||''}`).toLowerCase().includes(busca));
+
     document.getElementById('ref-contador').textContent = itens.length + ' referência(s)';
 
-    // só dá pra reordenar na visão completa (sem filtro/busca)
-    const podeReordenar = (_refTagFiltro === 'todos' && !busca);
+    // reordenar só faz sentido sem busca textual (tag/coleção tudo bem)
+    const podeReordenar = !busca;
     if (_refSortable) _refSortable.option('disabled', !podeReordenar);
 
     if (!itens.length) { c.innerHTML = '<p style="color:rgba(237,229,206,0.3);font-size:.8rem">Nenhuma referência.</p>'; return; }
-    c.innerHTML = itens.map(r => `
+    c.innerHTML = itens.map(r => {
+      const colTag = (r.colecao && _colecoesRef.includes(r.colecao))
+        ? `<span class="sem-tag" style="background:rgba(116,137,41,0.2);color:var(--oliva-lt)">${r.colecao}</span>` : '';
+      return `
       <div class="ref-item" data-id="${r.id}">
         <div style="display:flex;align-items:center;gap:.45rem;margin-bottom:.35rem">
           ${podeReordenar ? `<span class="ref-grip" title="Arraste para reordenar" style="cursor:grab;opacity:.32;user-select:none;font-size:.85rem">⠿</span>` : ''}
@@ -2259,14 +2313,15 @@
         </div>
         <div class="ref-abnt">${formatarABNT(r)}</div>
         ${r.nota ? `<div class="ref-nota">${r.nota}</div>` : ''}
-        ${(r.tags||[]).length ? `<div style="margin-top:.4rem">${(r.tags||[]).map(t=>`<span class="sem-tag">${t}</span>`).join('')}</div>` : ''}
+        ${(colTag || (r.tags||[]).length) ? `<div style="margin-top:.4rem">${colTag}${(r.tags||[]).map(t=>`<span class="sem-tag">${t}</span>`).join('')}</div>` : ''}
         <div class="ref-acoes">
           <button class="ref-btn" onclick="copiarRef('${r.id}','abnt')">Copiar ABNT</button>
           <button class="ref-btn" onclick="copiarRef('${r.id}','bibtex')">BibTeX</button>
           ${r.doi ? `<a class="ref-btn" href="https://doi.org/${r.doi}" target="_blank" rel="noopener">DOI ↗</a>` : ''}
           <button class="ref-btn perigo" onclick="excluirReferencia('${r.id}')">Excluir</button>
         </div>
-      </div>`).join('');
+      </div>`;
+    }).join('');
   }
 
   function renderRefTags() {
@@ -2274,48 +2329,13 @@
     if (!cont) return;
     const todas = [...new Set(_refsCache.flatMap(r => r.tags||[]))].sort();
     cont.innerHTML =
-      `<button class="feed-chip-ref ${_refTagFiltro==='todos'?'ativo':''}" onclick="filtrarRefTag('todos')">Todas</button>` +
-      todas.map(t => `<button class="feed-chip-ref ${_refTagFiltro===t?'ativo':''}" onclick="filtrarRefTag('${t}')">${t}</button>`).join('');
+      `<button class="feed-chip-ref ${_refTagFiltro==='todos'?'ativo':''}" onclick="filtrarRefTag('todos')">Todas tags</button>` +
+      todas.map(t => `<button class="feed-chip-ref ${_refTagFiltro===t?'ativo':''}" onclick="filtrarRefTag('${escAttr(t)}')">${t}</button>`).join('');
   }
 
   function filtrarRefTag(t) { _refTagFiltro = t; renderRefTags(); renderReferencias(); }
 
-  async function importarDOI() {
-    const bruto = document.getElementById('ref-doi-input').value.trim();
-    const doi = bruto.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '');
-    if (!doi) { setStatus('status-ref', '⚠ Cole um DOI.', 'err'); return; }
-    setStatus('status-ref', 'Buscando no CrossRef…');
-    try {
-      const res = await fetch(`https://api.crossref.org/works/${encodeURIComponent(doi)}`);
-      if (!res.ok) throw new Error('não encontrado');
-      const m = (await res.json()).message;
-      const autores = (m.author||[])
-        .map(a => `${(a.family||'').toUpperCase()}, ${a.given||''}`.trim().replace(/,\s*$/, ''))
-        .join('; ');
-      const tipoMap = {'journal-article':'artigo','book':'livro','book-chapter':'capitulo','proceedings-article':'evento','dissertation':'tese'};
-      const ano = m.published?.['date-parts']?.[0]?.[0]
-               || m['published-print']?.['date-parts']?.[0]?.[0]
-               || m['published-online']?.['date-parts']?.[0]?.[0] || '';
-      const set = (id, v) => { const e = document.getElementById(id); if (e) e.value = v || ''; };
-      set('ref-tipo', tipoMap[m.type] || 'artigo');
-      set('ref-autores', autores);
-      set('ref-titulo', (m.title||[''])[0]);
-      set('ref-ano', ano);
-      set('ref-veiculo', (m['container-title']||[''])[0]);
-      set('ref-volume', m.volume);
-      set('ref-numero', m.issue);
-      set('ref-paginas', m.page);
-      set('ref-editora', m.publisher);
-      set('ref-doi', m.DOI || doi);
-      set('ref-url', m.URL);
-      document.getElementById('ref-manual').open = true;
-      setStatus('status-ref', '✓ Dados preenchidos. Confira e salve.');
-    } catch(e) {
-      setStatus('status-ref', '✗ DOI não encontrado. Preencha manualmente.', 'err');
-      document.getElementById('ref-manual').open = true;
-    }
-  }
-
+  /* ── Salvar / excluir / copiar ────────────────────────── */
   async function adicionarReferencia() {
     const titulo = document.getElementById('ref-titulo').value.trim();
     if (!titulo) { setStatus('status-ref', '⚠ Título obrigatório.', 'err'); return; }
@@ -2323,15 +2343,17 @@
     const g = id => document.getElementById(id).value.trim();
     try {
       await db.collection('referencias').add({
-        tipo: g('ref-tipo'), autores: g('ref-autores'), titulo,
+        tipo: g('ref-tipo'), colecao: g('ref-colecao'),
+        autores: g('ref-autores'), titulo,
         ano: g('ref-ano'), veiculo: g('ref-veiculo'), volume: g('ref-volume'),
         numero: g('ref-numero'), paginas: g('ref-paginas'), local: g('ref-local'),
         editora: g('ref-editora'), doi: g('ref-doi'), url: g('ref-url'),
         acesso: g('ref-acesso'), nota: g('ref-nota'), tags,
+        ordem: -Date.now(),
         criado: new Date(),
       });
       setStatus('status-ref', '✓ Referência salva.');
-      ['ref-doi-input','ref-autores','ref-titulo','ref-ano','ref-veiculo','ref-volume','ref-numero','ref-paginas','ref-local','ref-editora','ref-doi','ref-url','ref-acesso','ref-nota','ref-tags']
+      ['ref-doi-input','ref-isbn-input','ref-autores','ref-titulo','ref-ano','ref-veiculo','ref-volume','ref-numero','ref-paginas','ref-local','ref-editora','ref-doi','ref-url','ref-acesso','ref-nota','ref-tags']
         .forEach(id => { const e = document.getElementById(id); if (e) e.value = ''; });
       carregarReferencias();
     } catch(e) { setStatus('status-ref', '✗ ' + (e.code || e.message), 'err'); }
@@ -2356,9 +2378,9 @@
     }).catch(() => setStatus('status-ref', '✗ Não consegui copiar.', 'err'));
   }
 
+  /* ── Inicialização do Caderno ─────────────────────────── */
   function inicializarSemestre() {
     carregarSemestre();
-    // carrega dados mas só atualiza DOM quando o painel estiver visível
     setTimeout(() => {
       carregarDisciplinas();
       carregarTrabalhos();
