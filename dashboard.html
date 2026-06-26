@@ -1532,7 +1532,8 @@
       document.getElementById('fin-meta').value = cfg.meta;
       document.getElementById('fin-progress').style.width = Math.min(100, Math.round(ent / cfg.meta * 100)) + '%';
     }
-    document.getElementById('fin-historico').innerHTML = items.length
+    const finHist = document.getElementById('fin-historico');
+    if (finHist) finHist.innerHTML = items.length
       ? `<div>${items.slice(-8).reverse().map(f => `
           <div class="sem-lembrete-item">
             <span class="sem-lembrete-dot ${f.tipo==='entrada'?'ok':'urgente'}"></span>
@@ -1677,17 +1678,19 @@
     document.getElementById('bl-corpo-'  + painel).value = '';
     carregarBlocosLivres(painel);
   }
-  function inicializarSemestre() {
+function inicializarSemestre() {
     carregarSemestre();
-    carregarDisciplinas();
-    carregarTrabalhos();
-    carregarFinancas();
-    carregarCarreira();
-    carregarEstagio();
-    carregarLembretes();
-    ['disciplinas','trabalhos','financas','carreira','estagio','lembretes']
-      .forEach(p => carregarBlocosLivres(p));
-  }
+    // carrega dados mas só atualiza DOM quando o painel estiver visível
+    setTimeout(() => {
+      carregarDisciplinas();
+      carregarTrabalhos();
+      carregarFinancas();
+      carregarCarreira();
+      carregarEstagio();
+      carregarLembretes();
+      ['disciplinas','trabalhos','financas','carreira','estagio','lembretes']
+        .forEach(p => carregarBlocosLivres(p));
+    }, 100);
 </script>
 </body>
 </html>
