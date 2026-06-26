@@ -801,8 +801,7 @@
       <div id="container-notas"><p class="loading-text">Carregando notas…</p></div>
     </div>
   </section>
-</main>
-<!-- FEED — Hacker News filtrado por área jurídica/criminológica -->
+<!-- FEED — HN + fontes brasileiras -->
   <section id="sec-feed">
     <div class="sec-motivo sec-wrapper">
       <span class="sec-label-txt">Feed · leituras em curso</span>
@@ -816,11 +815,15 @@
         <button class="feed-chip" data-tag="criminology"  onclick="filtrarFeed('criminology',this)">Criminologia</button>
         <button class="feed-chip" data-tag="rights"       onclick="filtrarFeed('rights',this)">Direitos</button>
         <button class="feed-chip" data-tag="ai"           onclick="filtrarFeed('ai',this)">IA</button>
+        <button class="feed-chip" data-tag="brasil"        onclick="filtrarFeed('brasil',this)">Brasil</button>
+        <button class="feed-chip" data-tag="direito-br"    onclick="filtrarFeed('direito-br',this)">Direito BR</button>
       </div>
       <p id="feed-status">Carregando feed…</p>
-      <div id="lista-feed"></div>
+      <div id="lista-feed">
+      </div>
     </div>
   </section>
+</main>
 <footer>
   <p>Portfólio de Renata Oliveira Nascimento &nbsp;·&nbsp; feito com frequência</p>
   <a href="dashboard.html"
@@ -1322,8 +1325,8 @@ animate();
       const ids = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json')
         .then(r => r.json());
 
-      // Busca os primeiros 80 em paralelo
-      const slice = ids.slice(0, 80);
+      // Busca os primeiros 200 em paralelo
+      const slice = ids.slice(0, 200);
       const itens = await Promise.all(
         slice.map(id =>
           fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`)
@@ -1358,7 +1361,7 @@ animate();
       return;
     }
 
-    const nomes = { law:'lei', privacy:'privacidade', criminology:'criminologia', rights:'direitos', ai:'ia' };
+    const nomes = { law:'lei', privacy:'privacidade', criminology:'criminologia', rights:'direitos', ai:'ia', brasil:'brasil', 'direito-br':'direito br' };
     const ago = ts => {
       const h = Math.floor((Date.now()/1000 - ts) / 3600);
       return h < 1 ? 'agora' : h < 24 ? `${h}h atrás` : `${Math.floor(h/24)}d atrás`;
@@ -1366,15 +1369,77 @@ animate();
 
     c.innerHTML = visiveis.map(i => `
       <div class="feed-item">
-        <span class="feed-score">${i.score}</span>
+        <span class="feed-score">${i.score !== null ? i.score : '—'}</span>
         <div>
           <a class="feed-titulo" href="${i.url}" target="_blank" rel="noopener">${i.title}</a>
-          <span class="feed-tag">${nomes[i._tag]||i._tag}</span>
+          <span class="feed-tag">${nomes[i._tag]||i._tag}${i._fonte ? ' · '+i._fonte : ''}</span>
         </div>
         <span class="feed-meta">${ago(i.time)}</span>
       </div>`).join('');
   }
 
+  /* ── Feed brasileiro — RSS via rss2json ── */
+  const FONTES_BR = [
+    {
+      nome: 'Conjur',
+      url:  'https://www.conjur.com.br/rss.xml',
+      tags_fixas: ['direito-br']
+    },
+    {
+      nome: 'JOTA',
+      url:  'https://www.jota.info/feed',
+      tags_fixas: ['direito-br']
+    },
+    {
+      nome: 'Agência Brasil',
+      url:  'https://agenciabrasil.ebc.com.br/rss/justica/feed.xml',
+      tags_fixas: ['brasil']
+    }
+  ];
+
+  const KEYWORDS_BR = {
+    'direito-br': ['direito','tribunal','stf','stj','supremo','sentença','pena','réu','processo','advogado','defensoria','ministério público','juiz','legislação','código penal','constituição','ibccrim','criminologia'],
+    'brasil':     ['brasil','brasileira','governo','congresso','câmara','senado','política','ministério','federal','estado','município','salvador','bahia']
+  };
+
+  function _tagBR(titulo) {
+    const t = titulo.toLowerCase();
+    for (const [tag, words] of Object.entries(KEYWORDS_BR)) {
+      if (words.some(w => t.includes(w))) return tag;
+    }
+    // itens das fontes BR sem keyword específica ficam como 'brasil'
+    return 'brasil';
+  }
+
+  async function carregarFeedBR() {
+    const proxy = 'https://api.rss2json.com/v1/api.json?rss_url=';
+    const itensBR = [];
+
+    await Promise.all(FONTES_BR.map(async fonte => {
+      try {
+        const res  = await fetch(proxy + encodeURIComponent(fonte.url)).then(r => r.json());
+        const itens = (res.items || []).slice(0, 10);
+        itens.forEach(item => {
+          const pubDate = item.pubDate ? new Date(item.pubDate).getTime() / 1000 : Date.now() / 1000;
+          itensBR.push({
+            title:  item.title || '',
+            url:    item.link  || item.guid || '',
+            score:  null,           // sem pontuação — fonte editorial
+            time:   pubDate,
+            _tag:   _tagBR(item.title || ''),
+            _fonte: fonte.nome
+          });
+        });
+      } catch(e) { /* fonte indisponível — silencioso */ }
+    }));
+
+    if (itensBR.length) {
+      // Mistura com os itens do HN já carregados, ordena por data
+      _feedItens = [..._feedItens, ...itensBR]
+        .sort((a, b) => b.time - a.time);
+      renderizarFeed();
+    }
+  }
   function filtrarFeed(tag, btn) {
     _feedTagAtiva = tag;
     document.querySelectorAll('.feed-chip').forEach(b => b.classList.remove('ativo'));
@@ -1382,10 +1447,9 @@ animate();
     renderizarFeed();
   }
 
-  carregarFeed();
+ carregarFeed();
+  carregarFeedBR();
 
-  carregarPerfil();
-  carregarProjetos();
   carregarPerfil();
   carregarProjetos();
   carregarProducoes();
