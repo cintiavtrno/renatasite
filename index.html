@@ -517,7 +517,7 @@ const loader = new GLTFLoader();
 // Não usamos Draco aqui pois os GLBs podem não estar comprimidos com ele
 
 let loadedCount = 0;
-const totalModels = 3;
+const totalModels = 7;
 function onProgress() {
   loadedCount++;
   loadBar.style.width = (loadedCount / totalModels * 100) + '%';
@@ -543,7 +543,8 @@ loader.load('models/Buggy.glb', (gltf) => {
   // Reposicionar no chão
   const bbox2 = new THREE.Box3().setFromObject(buggy);
   const minY  = bbox2.min.y;
-  buggy.position.set(0.8, -minY + 0.02, 1.2);
+  buggy.userData.groundY = -minY + 0.02;
+  buggy.position.set(0.8, buggy.userData.groundY, 1.2);
   buggy.rotation.y = -0.25; // ângulo ligeiramente virado para câmera
   
   buggy.traverse(child => {
@@ -625,6 +626,70 @@ loader.load('models/Desert_marigold.glb', (gltf) => {
   onProgress();
 }, null, (err) => { console.error('Marigold:', err); onProgress(); });
 
+// ── DESERT (paisagem sertão) ─────────────────
+loader.load('models/Desert.glb', (gltf) => {
+  const obj = gltf.scene;
+  const bbox = new THREE.Box3().setFromObject(obj);
+  const size = new THREE.Vector3();
+  bbox.getSize(size);
+  const s = 16 / Math.max(size.x, size.y, size.z);
+  obj.scale.setScalar(s);
+  const bbox2 = new THREE.Box3().setFromObject(obj);
+  obj.position.set(-2, -bbox2.min.y, -14);
+  obj.rotation.y = 0.1;
+  obj.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+  scene.add(obj);
+  onProgress();
+}, null, (err) => { console.error('Desert:', err); onProgress(); });
+
+// ── RIVER — Rio São Francisco ────────────────
+loader.load('models/River.glb', (gltf) => {
+  const obj = gltf.scene;
+  const bbox = new THREE.Box3().setFromObject(obj);
+  const size = new THREE.Vector3();
+  bbox.getSize(size);
+  const s = 7 / Math.max(size.x, size.y, size.z);
+  obj.scale.setScalar(s);
+  const bbox2 = new THREE.Box3().setFromObject(obj);
+  obj.position.set(-7, -bbox2.min.y + 0.01, -5);
+  obj.rotation.y = 0.5;
+  obj.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+  scene.add(obj);
+  onProgress();
+}, null, (err) => { console.error('River:', err); onProgress(); });
+
+// ── DAM — Barragem de Sobradinho ─────────────
+loader.load('models/Dam.glb', (gltf) => {
+  const obj = gltf.scene;
+  const bbox = new THREE.Box3().setFromObject(obj);
+  const size = new THREE.Vector3();
+  bbox.getSize(size);
+  const s = 5.5 / Math.max(size.x, size.y, size.z);
+  obj.scale.setScalar(s);
+  const bbox2 = new THREE.Box3().setFromObject(obj);
+  obj.position.set(4, -bbox2.min.y + 0.01, -16);
+  obj.rotation.y = -0.3;
+  obj.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+  scene.add(obj);
+  onProgress();
+}, null, (err) => { console.error('Dam:', err); onProgress(); });
+
+// ── WOOD BRIDGE — Ponte de Juazeiro ──────────
+loader.load('models/Wood_Bridge.glb', (gltf) => {
+  const obj = gltf.scene;
+  const bbox = new THREE.Box3().setFromObject(obj);
+  const size = new THREE.Vector3();
+  bbox.getSize(size);
+  const s = 4 / Math.max(size.x, size.y, size.z);
+  obj.scale.setScalar(s);
+  const bbox2 = new THREE.Box3().setFromObject(obj);
+  obj.position.set(6.5, -bbox2.min.y + 0.01, -1.5);
+  obj.rotation.y = -0.6;
+  obj.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+  scene.add(obj);
+  onProgress();
+}, null, (err) => { console.error('Bridge:', err); onProgress(); });
+
 // ── RESIZE ──────────────────────────────────
 window.addEventListener('resize', () => {
   const w = canvas.offsetWidth, h = canvas.offsetHeight;
@@ -643,7 +708,7 @@ function animate() {
   
   // Buggy — float suave
   if (scene.userData.buggy) {
-    scene.userData.buggy.position.y = 0.02 + Math.sin(t * 0.9) * 0.06;
+    scene.userData.buggy.position.y = scene.userData.buggy.userData.groundY + Math.sin(t * 0.9) * 0.06;
     scene.userData.buggy.rotation.y = -0.25 + Math.sin(t * 0.4) * 0.03;
   }
   
