@@ -587,6 +587,37 @@
     .sem-lembrete-dot.urgente { background: var(--bordo-lt); }
     .sem-lembrete-dot.ok      { background: var(--oliva-lt); }
 
+    /* bloco livre de anotação dentro de qualquer painel semestre */
+    .bloco-livre {
+      background: rgba(232,184,32,0.06);
+      border-left: 2px solid var(--ouro);
+      padding: .7rem .9rem;
+      margin-top: .5rem;
+      position: relative;
+    }
+    .bloco-livre .bl-titulo {
+      font-family: 'Syne', sans-serif;
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--ouro-lt);
+      margin-bottom: .3rem;
+    }
+    .bloco-livre .bl-corpo {
+      font-size: .8rem;
+      color: rgba(237,229,206,0.6);
+      line-height: 1.55;
+      white-space: pre-wrap;
+    }
+    .bloco-livre .bl-del {
+      position: absolute;
+      top: .4rem; right: .5rem;
+      cursor: pointer;
+      opacity: .28;
+      font-size: .65rem;
+    }
+    .bloco-livre .bl-del:hover { opacity: .7; }
     details > summary {
       font-family: 'Syne', sans-serif;
       font-size: .62rem;
@@ -859,9 +890,16 @@
           <input class="sem-input" id="disc-dias"  placeholder="Dias/horário"/>
           <input class="sem-input" id="disc-nota"  placeholder="Nota atual"/>
         </div>
-        <button class="sem-btn-sm" onclick="adicionarDisciplina()">Salvar disciplina</button>
-      </details>
-    </div>
+       <button class="sem-btn-sm" onclick="adicionarDisciplina()">Salvar disciplina</button>
+        </details>
+        <div id="blocos-livres-disciplinas"></div>
+        <details>
+          <summary>+ Anotação livre</summary>
+          <input class="sem-input" id="bl-titulo-disciplinas" placeholder="Título (ex: Dúvida, Resumo...)"/>
+          <textarea class="sem-input" id="bl-corpo-disciplinas" rows="3" placeholder="Texto livre..." style="resize:vertical;padding:.4rem;line-height:1.5"></textarea>
+          <button class="sem-btn-sm" onclick="adicionarBlocoLivre('disciplinas')">Salvar</button>
+        </details>
+      </div>
 
     <!-- TRABALHOS -->
     <div class="semestre-painel" id="painel-trabalhos">
@@ -881,8 +919,15 @@
           </select>
         </div>
         <button class="sem-btn-sm" onclick="adicionarTrabalho()">Salvar trabalho</button>
-      </details>
-    </div>
+        </details>
+        <div id="blocos-livres-trabalhos"></div>
+        <details>
+          <summary>+ Anotação livre</summary>
+          <input class="sem-input" id="bl-titulo-trabalhos" placeholder="Título"/>
+          <textarea class="sem-input" id="bl-corpo-trabalhos" rows="3" placeholder="Texto livre..." style="resize:vertical;padding:.4rem;line-height:1.5"></textarea>
+          <button class="sem-btn-sm" onclick="adicionarBlocoLivre('trabalhos')">Salvar</button>
+        </details>
+      </div>
 
     <!-- FINANÇAS -->
     <div class="semestre-painel" id="painel-financas">
@@ -909,7 +954,7 @@
           <input class="sem-input" id="fin-meta" placeholder="Meta mensal (R$)" type="number" style="margin-top:.35rem" onchange="salvarMeta()"/>
         </div>
       </div>
-      <div style="margin-top:.8rem" id="fin-historico"></div>
+      8rem" id="fin-historico"></div>
     </div>
 
     <!-- CARREIRA -->
@@ -938,6 +983,13 @@
           <button class="sem-btn-sm" onclick="adicionarEventoCarr()">+ Evento</button>
         </div>
       </div>
+      <div id="blocos-livres-carreira" style="margin-top:.5rem"></div>
+      <details>
+        <summary>+ Anotação livre</summary>
+        <input class="sem-input" id="bl-titulo-carreira" placeholder="Título (ex: Meta, Reflexão...)"/>
+        <textarea class="sem-input" id="bl-corpo-carreira" rows="3" placeholder="Texto livre..." style="resize:vertical;padding:.4rem;line-height:1.5"></textarea>
+        <button class="sem-btn-sm" onclick="adicionarBlocoLivre('carreira')">Salvar</button>
+      </details>
     </div>
 
     <!-- ESTÁGIO -->
@@ -966,6 +1018,13 @@
           <button class="sem-btn-sm" onclick="adicionarProcesso()">+ Processo</button>
         </div>
       </div>
+      <div id="blocos-livres-estagio" style="margin-top:.5rem"></div>
+      <details>
+        <summary>+ Anotação livre</summary>
+        <input class="sem-input" id="bl-titulo-estagio" placeholder="Título (ex: Feedback, Aprendizado...)"/>
+        <textarea class="sem-input" id="bl-corpo-estagio" rows="3" placeholder="Texto livre..." style="resize:vertical;padding:.4rem;line-height:1.5"></textarea>
+        <button class="sem-btn-sm" onclick="adicionarBlocoLivre('estagio')">Salvar</button>
+      </details>
     </div>
 
     <!-- LEMBRETES -->
@@ -983,9 +1042,16 @@
             <option value="ok">Concluído</option>
           </select>
           <button class="sem-btn-sm" onclick="adicionarLembrete()">+ Lembrete</button>
+          </div>
+          <div id="blocos-livres-lembretes" style="margin-top:.5rem"></div>
+          <details>
+            <summary>+ Anotação livre</summary>
+            <input class="sem-input" id="bl-titulo-lembretes" placeholder="Título"/>
+            <textarea class="sem-input" id="bl-corpo-lembretes" rows="3" placeholder="Texto livre..." style="resize:vertical;padding:.4rem;line-height:1.5"></textarea>
+            <button class="sem-btn-sm" onclick="adicionarBlocoLivre('lembretes')">Salvar</button>
+          </details>
         </div>
       </div>
-    </div>
   </div>
   <!-- FIM SEMESTRE -->
 
@@ -1298,7 +1364,12 @@
     card.className  = 'card-kanban';
     card.draggable  = true;
     card.dataset.id = id;
-    card.textContent = dados.titulo;
+    card.innerHTML = `
+      <span style="flex:1">${dados.titulo}</span>
+      <span onclick="excluirTarefa('${id}')" title="Excluir"
+        style="cursor:pointer;opacity:.35;font-size:.7rem;margin-left:.5rem;flex-shrink:0;line-height:1">✕</span>`;
+    card.style.display = 'flex';
+    card.style.alignItems = 'center';
     card.addEventListener('dragstart', () => { draggedId = id; });
     col.appendChild(card);
   }
@@ -1308,6 +1379,12 @@
     if (!draggedId) return;
     await db.collection('tarefas').doc(draggedId).update({ status: novoStatus });
     draggedId = null;
+    carregarTarefas();
+  }
+
+  async function excluirTarefa(id) {
+    if (!confirm('Excluir esta tarefa?')) return;
+    await db.collection('tarefas').doc(id).delete();
     carregarTarefas();
   }
 
@@ -1578,7 +1655,28 @@
     ['lem-texto','lem-data'].forEach(id => document.getElementById(id).value = '');
     carregarLembretes();
   }
+  /* ── Blocos livres (anotações avulsas por painel) ── */
+  async function carregarBlocosLivres(painel) {
+    const c = document.getElementById('blocos-livres-' + painel);
+    if (!c) return;
+    const items = await semGet('blocos_' + painel);
+    c.innerHTML = items.map(b => `
+      <div class="bloco-livre">
+        <div class="bl-titulo">${b.titulo||''}</div>
+        <div class="bl-corpo">${b.corpo||''}</div>
+        <span class="bl-del" onclick="semDel('blocos_${painel}','${b.id}').then(()=>carregarBlocosLivres('${painel}'))">✕</span>
+      </div>`).join('');
+  }
 
+  async function adicionarBlocoLivre(painel) {
+    const titulo = document.getElementById('bl-titulo-' + painel).value.trim();
+    const corpo  = document.getElementById('bl-corpo-'  + painel).value.trim();
+    if (!titulo && !corpo) return;
+    await semAdd('blocos_' + painel, { titulo, corpo });
+    document.getElementById('bl-titulo-' + painel).value = '';
+    document.getElementById('bl-corpo-'  + painel).value = '';
+    carregarBlocosLivres(painel);
+  }
   function inicializarSemestre() {
     carregarSemestre();
     carregarDisciplinas();
@@ -1587,6 +1685,8 @@
     carregarCarreira();
     carregarEstagio();
     carregarLembretes();
+    ['disciplinas','trabalhos','financas','carreira','estagio','lembretes']
+      .forEach(p => carregarBlocosLivres(p));
   }
 </script>
 </body>
