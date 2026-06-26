@@ -189,6 +189,40 @@
     }
     #dash-nav .nav-right button:hover { border-color: var(--ouro-lt); color: var(--ouro-lt); }
 
+    /* ── Switcher de modo (topo) ── */
+    .modo-switcher {
+      display: flex;
+      gap: .5rem;
+      padding: 1rem 1.4rem;
+      background: var(--bordo-dk);
+      border-bottom: 1px solid var(--dash-border);
+    }
+    .modo-btn {
+      flex: 1;
+      max-width: 260px;
+      font-family: 'Syne', sans-serif;
+      font-size: .72rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--creme-dk);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(237,229,206,0.12);
+      padding: .7rem 1.2rem;
+      cursor: pointer;
+      transition: all .18s;
+    }
+    .modo-btn:hover { border-color: rgba(232,184,32,0.4); color: var(--creme); }
+    .modo-btn.ativo {
+      background: var(--ouro);
+      color: var(--tinta);
+      border-color: var(--ouro-lt);
+    }
+    @media (max-width: 640px) {
+      .modo-switcher { padding: .75rem .85rem; gap: .4rem; }
+      .modo-btn { font-size: .62rem; padding: .6rem .5rem; letter-spacing: .08em; }
+    }
+
     /* ── Abas principais ── */
     .abas {
       display: flex;
@@ -856,6 +890,15 @@
     </div>
   </nav>
 
+  <!-- ══ SWITCHER DE MODO ════════════════════════════════════ -->
+  <div class="modo-switcher">
+    <button class="modo-btn ativo" onclick="trocarModo('caderno',this)">Meu Caderno</button>
+    <button class="modo-btn"       onclick="trocarModo('portfolio',this)">Portfólio Público</button>
+  </div>
+
+  <!-- ══ MODO CADERNO (vida acadêmica · notion) ══════════════ -->
+  <div id="modo-caderno">
+
   <!-- ══ BLOCO SEMESTRE ══════════════════════════════════════ -->
   <div id="bloco-semestre">
     <div class="sem-header">
@@ -1055,6 +1098,11 @@
   </div>
   <!-- FIM SEMESTRE -->
 
+  </div><!-- #modo-caderno -->
+
+  <!-- ══ MODO PORTFÓLIO (edição pública do site) ═════════════ -->
+  <div id="modo-portfolio" style="display:none">
+
   <!-- ══ ABAS PRINCIPAIS ════════════════════════════════════ -->
   <div class="abas">
     <button class="aba ativa" onclick="mudarAba('perfil',this)">Perfil</button>
@@ -1145,8 +1193,9 @@
     </div>
   </div>
 
-</div><!-- #dashboard -->
+  </div><!-- #modo-portfolio -->
 
+</div><!-- #dashboard -->
 <!-- ══════════════════════════════════════════════════════════
      JAVASCRIPT
 ══════════════════════════════════════════════════════════ -->
@@ -1205,6 +1254,15 @@
       document.getElementById('dashboard').style.display  = 'none';
     }
   });
+
+  /* ── Switcher de modo (Caderno ↔ Portfólio) ─────────────── */
+  function trocarModo(modo, btn) {
+    document.getElementById('modo-caderno').style.display   = (modo === 'caderno')   ? 'block' : 'none';
+    document.getElementById('modo-portfolio').style.display = (modo === 'portfolio') ? 'block' : 'none';
+    document.querySelectorAll('.modo-btn').forEach(b => b.classList.remove('ativo'));
+    btn.classList.add('ativo');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
 
   /* ── Abas principais ────────────────────────────────────── */
   function mudarAba(nome, btn) {
