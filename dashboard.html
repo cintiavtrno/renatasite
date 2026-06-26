@@ -15,6 +15,9 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
+  <!-- SortableJS (arrastar pra reordenar) -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.6/Sortable.min.js"></script>
+
   <style>
     /* ══ RESET & TOKENS ══════════════════════════════════════ */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1254,6 +1257,16 @@
       </div>
       <p class="ref-doi-hint">Cole o DOI do artigo e os campos abaixo se preenchem sozinhos (via CrossRef). Confira e salve.</p>
     </div>
+
+    <!-- HERO 2: importar por ISBN -->
+    <div class="ref-doi-box" style="border-left-color:var(--oliva-lt);background:rgba(116,137,41,0.07);border-color:rgba(116,137,41,0.25)">
+      <label class="ref-doi-label" style="color:var(--oliva-lt)">Importar por ISBN (livros)</label>
+      <div class="ref-doi-row">
+        <input class="sem-input" id="ref-isbn-input" placeholder="978-85-..."/>
+        <button class="ref-doi-btn" style="background:var(--oliva-lt)" onclick="importarISBN()">Importar</button>
+      </div>
+      <p class="ref-doi-hint">Para livros (que raramente têm DOI). Busca no Open Library — cobertura de títulos brasileiros é parcial.</p>
+    </div>
     <p id="status-ref" class="msg-status" style="margin:.2rem 0 .8rem"></p>
 
     <!-- Formulário (manual / revisão do import) -->
@@ -1943,20 +1956,6 @@
     document.getElementById('bl-corpo-'  + painel).value = '';
     carregarBlocosLivres(painel);
   }
-/* ══ REFERÊNCIAS BIBLIOGRÁFICAS ════════════════════════════ */
-  let _refsCache = [];
-  let _refTagFiltro = 'todos';
-
-  async function carregarReferencias() {
-    const c = document.getElementById('lista-referencias');
-    if (!c) return;
-    try {
-      const snap = await db.collection('referencias').orderBy('criado','desc').get();
-      _refsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    } catch(e) { _refsCache = []; console.error('[refs]', e); }
-    renderRefTags();
-    renderReferencias();
-  }
 
   function rotuloTipo(t) {
     return ({artigo:'Artigo', livro:'Livro', capitulo:'Cap. de livro', tese:'Tese/Diss.', evento:'Trab. em evento', site:'Site'})[t] || 'Referência';
@@ -2086,6 +2085,7 @@
         numero: g('ref-numero'), paginas: g('ref-paginas'), local: g('ref-local'),
         editora: g('ref-editora'), doi: g('ref-doi'), url: g('ref-url'),
         acesso: g('ref-acesso'), nota: g('ref-nota'), tags,
+        ordem: -Date.now(),
         criado: new Date(),
       });
       setStatus('status-ref', '✓ Referência salva.');
@@ -2117,16 +2117,79 @@
   /* ══ REFERÊNCIAS BIBLIOGRÁFICAS ════════════════════════════ */
   let _refsCache = [];
   let _refTagFiltro = 'todos';
+  let _refSortable = null;
+
+  const _tsMillis = v => v?.toMillis?.() ?? (v instanceof Date ? v.getTime() : 0);
 
   async function carregarReferencias() {
     const c = document.getElementById('lista-referencias');
     if (!c) return;
     try {
-      const snap = await db.collection('referencias').orderBy('criado','desc').get();
+      const snap = await db.collection('referencias').get();
       _refsCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      _refsCache.sort((a, b) => {
+        const ao = (typeof a.ordem === 'number') ? a.ordem : 0;
+        const bo = (typeof b.ordem === 'number') ? b.ordem : 0;
+        if (ao !== bo) return ao - bo;
+        return _tsMillis(b.criado) - _tsMillis(a.criado);
+      });
     } catch(e) { _refsCache = []; console.error('[refs]', e); }
     renderRefTags();
     renderReferencias();
+    // inicializa o arrastar uma única vez
+    if (window.Sortable && !_refSortable) {
+      _refSortable = Sortable.create(c, {
+        handle: '.ref-grip',
+        animation: 150,
+        onEnd: salvarOrdemRefs,
+      });
+    }
+  }
+
+  async function salvarOrdemRefs() {
+    const ids = [...document.querySelectorAll('#lista-referencias .ref-item')].map(el => el.dataset.id);
+    if (!ids.length) return;
+    const batch = db.batch();
+    ids.forEach((id, i) => {
+      batch.update(db.collection('referencias').doc(id), { ordem: i });
+      const r = _refsCache.find(x => x.id === id);
+      if (r) r.ordem = i;
+    });
+    try { await batch.commit(); setStatus('status-ref', '✓ Ordem salva.'); }
+    catch(e) { setStatus('status-ref', '✗ Erro ao salvar ordem.', 'err'); }
+  }
+
+  async function importarISBN() {
+    const isbn = document.getElementById('ref-isbn-input').value.trim().replace(/[-\s]/g, '');
+    if (!isbn) { setStatus('status-ref', '⚠ Cole um ISBN.', 'err'); return; }
+    setStatus('status-ref', 'Buscando no Open Library…');
+    try {
+      const url = `https://openlibrary.org/api/books?bibkeys=ISBN:${encodeURIComponent(isbn)}&jscmd=data&format=json`;
+      const data = await fetch(url).then(r => r.json());
+      const livro = data[`ISBN:${isbn}`];
+      if (!livro) throw new Error('não encontrado');
+      const autores = (livro.authors || []).map(a => {
+        const partes = (a.name || '').trim().split(/\s+/);
+        if (partes.length < 2) return (a.name || '').toUpperCase();
+        const sobren = partes.pop().toUpperCase();
+        return `${sobren}, ${partes.join(' ')}`;
+      }).join('; ');
+      const ano = (livro.publish_date || '').match(/\d{4}/)?.[0] || '';
+      const set = (id, v) => { const e = document.getElementById(id); if (e) e.value = v || ''; };
+      set('ref-tipo', 'livro');
+      set('ref-autores', autores);
+      set('ref-titulo', livro.title || '');
+      set('ref-ano', ano);
+      set('ref-editora', (livro.publishers || [{}])[0]?.name || '');
+      set('ref-local', (livro.publish_places || [{}])[0]?.name || '');
+      set('ref-veiculo', '');
+      set('ref-url', livro.url || '');
+      document.getElementById('ref-manual').open = true;
+      setStatus('status-ref', '✓ Livro encontrado. Confira e salve.');
+    } catch(e) {
+      setStatus('status-ref', '✗ ISBN não encontrado no Open Library. Preencha manualmente.', 'err');
+      document.getElementById('ref-manual').open = true;
+    }
   }
 
   function rotuloTipo(t) {
@@ -2182,10 +2245,18 @@
     if (busca) itens = itens.filter(r =>
       (`${r.titulo||''} ${r.autores||''} ${r.ano||''} ${r.veiculo||''}`).toLowerCase().includes(busca));
     document.getElementById('ref-contador').textContent = itens.length + ' referência(s)';
+
+    // só dá pra reordenar na visão completa (sem filtro/busca)
+    const podeReordenar = (_refTagFiltro === 'todos' && !busca);
+    if (_refSortable) _refSortable.option('disabled', !podeReordenar);
+
     if (!itens.length) { c.innerHTML = '<p style="color:rgba(237,229,206,0.3);font-size:.8rem">Nenhuma referência.</p>'; return; }
     c.innerHTML = itens.map(r => `
-      <div class="ref-item">
-        <span class="ref-tipo">${rotuloTipo(r.tipo)}</span>
+      <div class="ref-item" data-id="${r.id}">
+        <div style="display:flex;align-items:center;gap:.45rem;margin-bottom:.35rem">
+          ${podeReordenar ? `<span class="ref-grip" title="Arraste para reordenar" style="cursor:grab;opacity:.32;user-select:none;font-size:.85rem">⠿</span>` : ''}
+          <span class="ref-tipo" style="margin:0">${rotuloTipo(r.tipo)}</span>
+        </div>
         <div class="ref-abnt">${formatarABNT(r)}</div>
         ${r.nota ? `<div class="ref-nota">${r.nota}</div>` : ''}
         ${(r.tags||[]).length ? `<div style="margin-top:.4rem">${(r.tags||[]).map(t=>`<span class="sem-tag">${t}</span>`).join('')}</div>` : ''}
