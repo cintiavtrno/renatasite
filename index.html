@@ -1344,7 +1344,6 @@ animate();
         .slice(0, 30);
 
       status.textContent = '';
-      renderizarFeed();
     } catch(e) {
       status.textContent = 'Feed indisponível no momento.';
     }
@@ -1434,10 +1433,7 @@ animate();
     }));
 
     if (itensBR.length) {
-      // Mistura com os itens do HN já carregados, ordena por data
-      _feedItens = [..._feedItens, ...itensBR]
-        .sort((a, b) => b.time - a.time);
-      renderizarFeed();
+      _feedItens = [..._feedItens, ...itensBR];
     }
   }
   function filtrarFeed(tag, btn) {
@@ -1447,8 +1443,11 @@ animate();
     renderizarFeed();
   }
 
- carregarFeed();
-  carregarFeedBR();
+ // Carrega HN e fontes BR em paralelo, renderiza só quando ambos terminarem
+  Promise.all([carregarFeed(), carregarFeedBR()]).then(() => {
+    _feedItens.sort((a, b) => b.time - a.time);
+    renderizarFeed();
+  });
 
   carregarPerfil();
   carregarProjetos();
