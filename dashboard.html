@@ -5,202 +5,1058 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard – Renata</title>
 
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+
   <!-- Firebase SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ══ RESET & TOKENS ══════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bordo: #7A1A30; --bordo-dk: #530F20;
-      --oliva: #4E5C1E; --oliva-dk: #323C12;
-      --ouro: #C89012;  --ouro-lt: #E8B820;
-      --creme: #EDE5CE; --tinta: #18100A;
+      --bordo:    #7A1A30;
+      --bordo-dk: #530F20;
+      --bordo-lt: #A33050;
+      --oliva:    #4E5C1E;
+      --oliva-dk: #323C12;
+      --oliva-lt: #748929;
+      --ouro:     #C89012;
+      --ouro-lt:  #E8B820;
+      --creme:    #EDE5CE;
+      --creme-dk: #C8BEA0;
+      --tinta:    #18100A;
+      --dash-bg:  #12100E;
+      --dash-surface: rgba(255,255,255,0.04);
+      --dash-border:  rgba(237,229,206,0.09);
     }
-    body { font-family: system-ui, sans-serif; background: #f0f2f5; color: #222; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--dash-bg);
+      color: var(--creme);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
 
-    /* Login */
+    /* ══ LOGIN — MESA ILUSTRADA ══════════════════════════════ */
     #tela-login {
-      display: flex; flex-direction: column; align-items: center;
-      justify-content: center; min-height: 100vh; gap: 1rem;
+      display: block;
+      width: 100%;
+      height: 100vh;
+      min-height: 560px;
       background: var(--tinta);
+      position: relative;
+      overflow: hidden;
     }
-    #tela-login h1 {
-      font-size: 1.5rem;
+    #login-scene {
+      position: absolute;
+      inset: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+    #login-card {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 3rem;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: .8rem;
+      background: rgba(24,16,10,0.82);
+      border: 1px solid rgba(232,184,32,0.18);
+      border-top: 2px solid var(--ouro-lt);
+      padding: 2rem 2rem 1.8rem;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      width: 280px;
+    }
+    #login-card h1 {
       font-family: 'Playfair Display', Georgia, serif;
-      font-style: italic; font-weight: 900;
-      color: var(--creme); letter-spacing: -0.02em;
+      font-style: italic;
+      font-weight: 900;
+      font-size: clamp(1.2rem, 4vw, 1.5rem);
+      color: var(--creme);
+      letter-spacing: -0.02em;
+      text-align: center;
+    }
+    .login-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--ouro-lt);
+      opacity: .65;
     }
     #tela-login input {
-      padding: .65rem .9rem;
-      border: none; border-bottom: 2px solid rgba(237,229,206,0.2);
-      border-radius: 0; font-size: .95rem; width: 280px;
+      padding: .6rem .7rem;
+      border: none;
+      border-bottom: 2px solid rgba(237,229,206,0.18);
+      border-radius: 0;
+      font-size: .9rem;
+      width: 100%;
       background: rgba(255,255,255,0.05);
-      color: var(--creme); outline: none;
+      color: var(--creme);
+      outline: none;
+      font-family: 'DM Sans', sans-serif;
     }
     #tela-login input:focus { border-bottom-color: var(--ouro-lt); }
-    #tela-login input::placeholder { color: rgba(237,229,206,0.28); }
+    #tela-login input::placeholder { color: rgba(237,229,206,0.25); }
     #tela-login button {
-      padding: .7rem 1.5rem; background: var(--bordo); color: var(--creme);
-      border: none; border-radius: 0; cursor: pointer; font-size: .75rem;
-      letter-spacing: .18em; text-transform: uppercase; font-weight: 700;
-      width: 280px; margin-top: .5rem;
+      padding: .65rem 1.2rem;
+      background: var(--bordo);
+      color: var(--creme);
+      border: none;
+      cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      font-size: .68rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      font-weight: 700;
+      width: 100%;
+      margin-top: .25rem;
+      transition: background .2s;
     }
     #tela-login button:hover { background: var(--bordo-dk); }
-    #erro-login { color: var(--ouro-lt); font-size: .8rem; opacity: .75; }
+    #erro-login {
+      color: var(--ouro-lt);
+      font-size: .75rem;
+      opacity: .8;
+      font-family: 'DM Mono', monospace;
+      min-height: 1.1em;
+    }
 
-    /* Dashboard */
+    /* ══ DASHBOARD SHELL ════════════════════════════════════ */
     #dashboard { display: none; }
-nav {
-      background: var(--bordo-dk); color: #fff; padding: .75rem 1.5rem;
-      display: flex; align-items: center; justify-content: space-between;
-      border-bottom: 2px solid var(--ouro);
-    }
-    nav h1 { font-size: 1.1rem; }
-    nav button {
-      background: transparent; border: 1px solid #888; color: #ccc;
-      padding: .35rem .85rem; border-radius: 4px; cursor: pointer; font-size: .85rem;
-    }
 
-    .abas { display: flex; background: #fff; border-bottom: 2px solid #ddd; }
-    .aba {
-      padding: .75rem 1.5rem; cursor: pointer; font-size: .9rem;
-      border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px;
+    /* ── Top nav ── */
+    #dash-nav {
+      background: var(--bordo-dk);
+      color: var(--creme);
+      padding: .7rem 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--ouro);
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-.aba.ativa { border-bottom-color: var(--bordo); font-weight: 600; color: var(--bordo); }
-    .painel { display: none; padding: 1.5rem; max-width: 900px; margin: 0 auto; }
+    #dash-nav .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      min-width: 0;
+    }
+    #dash-nav .nav-back {
+      font-family: 'Syne', sans-serif;
+      font-size: .62rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--ouro-lt);
+      text-decoration: none;
+      font-weight: 700;
+      opacity: .75;
+      white-space: nowrap;
+    }
+    #dash-nav h1 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: clamp(.85rem, 3vw, 1.05rem);
+      font-weight: 700;
+      color: var(--creme);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #dash-nav .nav-right button {
+      background: transparent;
+      border: 1px solid rgba(237,229,206,0.25);
+      color: var(--creme-dk);
+      padding: .32rem .8rem;
+      cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      font-size: .62rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      transition: border-color .2s;
+    }
+    #dash-nav .nav-right button:hover { border-color: var(--ouro-lt); color: var(--ouro-lt); }
+
+    /* ── Abas principais ── */
+    .abas {
+      display: flex;
+      background: rgba(0,0,0,0.35);
+      border-bottom: 1px solid var(--dash-border);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .abas::-webkit-scrollbar { display: none; }
+    .aba {
+      font-family: 'Syne', sans-serif;
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--creme-dk);
+      opacity: .5;
+      padding: .75rem 1.2rem;
+      cursor: pointer;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: none;
+      white-space: nowrap;
+      transition: color .15s, opacity .15s;
+    }
+    .aba:hover { opacity: .8; }
+    .aba.ativa { color: var(--ouro-lt); opacity: 1; border-bottom-color: var(--ouro-lt); }
+
+    .painel { display: none; padding: 1.4rem; max-width: 960px; margin: 0 auto; }
     .painel.ativo { display: block; }
 
-    /* Formulários */
+    /* ── Forms ── */
     .campo { margin-bottom: 1rem; }
-    .campo label { display: block; font-size: .85rem; font-weight: 600; margin-bottom: .35rem; }
-    .campo input, .campo textarea {
-      width: 100%; padding: .6rem .8rem; border: 1px solid #ccc;
-      border-radius: 4px; font-size: .95rem; font-family: inherit;
+    .campo label {
+      display: block;
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      letter-spacing: .18em;
+      text-transform: uppercase;
+      color: var(--ouro-lt);
+      opacity: .7;
+      margin-bottom: .4rem;
     }
+    .campo input, .campo textarea, .campo select {
+      width: 100%;
+      padding: .6rem .8rem;
+      border: 1px solid var(--dash-border);
+      border-radius: 0;
+      font-size: .9rem;
+      font-family: 'DM Sans', sans-serif;
+      background: var(--dash-surface);
+      color: var(--creme);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .campo input:focus, .campo textarea:focus { border-color: var(--ouro-lt); }
     .campo textarea { resize: vertical; min-height: 80px; }
-   .btn-salvar {
-      background: var(--bordo); color: var(--creme); border: none; padding: .65rem 1.4rem;
-      border-radius: 0; cursor: pointer; font-size: .95rem;
-      letter-spacing: 0.06em; font-weight: 600;
+    .btn-salvar {
+      background: var(--bordo);
+      color: var(--creme);
+      border: none;
+      padding: .65rem 1.4rem;
+      cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      font-size: .72rem;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      font-weight: 700;
+      transition: background .2s;
     }
     .btn-salvar:hover { background: var(--bordo-dk); }
     .btn-perigo {
-      background: #c00; color: #fff; border: none; padding: .4rem .85rem;
-      border-radius: 4px; cursor: pointer; font-size: .8rem;
+      background: transparent;
+      border: 1px solid rgba(200,0,0,0.4);
+      color: #E08090;
+      padding: .32rem .75rem;
+      cursor: pointer;
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      letter-spacing: .08em;
+      transition: background .15s;
     }
-    .msg-status { margin-top: .75rem; font-size: .875rem; }
-    .msg-ok  { color: green; }
-    .msg-err { color: #c00; }
+    .btn-perigo:hover { background: rgba(200,0,0,0.15); }
+    .msg-status { margin-top: .75rem; font-size: .82rem; font-family: 'DM Mono', monospace; }
+    .msg-ok  { color: var(--oliva-lt); }
+    .msg-err { color: #E08090; }
 
-    /* Projetos */
+    /* ── Seção título interno ── */
+    .painel-titulo {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: clamp(1.1rem, 3vw, 1.4rem);
+      font-weight: 700;
+      color: var(--creme);
+      margin-bottom: 1.25rem;
+    }
+
+    /* ── Projetos ── */
     #lista-projetos-dash { margin-top: 1.5rem; }
     .item-projeto {
-      background: #fff; border: 1px solid #ddd; border-radius: 6px;
-      padding: .85rem 1rem; margin-bottom: .75rem;
-      display: flex; justify-content: space-between; align-items: flex-start;
+      background: var(--dash-surface);
+      border: 1px solid var(--dash-border);
+      border-left: 3px solid var(--ouro);
+      padding: .9rem 1rem;
+      margin-bottom: .75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
     }
-    .item-projeto-info h3 { font-size: .95rem; }
-    .item-projeto-info p  { font-size: .8rem; color: #666; margin-top: .2rem; }
-    .tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .4rem; }
-    .tag  { background: #e3e8ff; color: #3a4db7; font-size: .7rem; padding: .15rem .45rem; border-radius: 20px; }
+    .item-projeto-info h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: .88rem;
+      font-weight: 700;
+      color: var(--creme);
+    }
+    .item-projeto-info p { font-size: .8rem; color: rgba(237,229,206,0.5); margin-top: .2rem; }
+    .tags { display: flex; flex-wrap: wrap; gap: .3rem; margin-top: .45rem; }
+    .tag {
+      background: rgba(232,184,32,0.12);
+      color: var(--ouro-lt);
+      font-family: 'DM Mono', monospace;
+      font-size: .62rem;
+      padding: .15rem .45rem;
+    }
 
-    /* Kanban */
-    #kanban { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-top: 1rem; }
+    /* ── Kanban ── */
+    #kanban {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: .75rem;
+      margin-top: 1rem;
+    }
     .coluna-kanban {
-      background: #fff; border: 1px solid #ddd; border-radius: 6px;
-      padding: .85rem; min-height: 300px;
+      background: var(--dash-surface);
+      border: 1px solid var(--dash-border);
+      padding: .85rem;
+      min-height: 220px;
     }
-    .coluna-kanban h3 { font-size: .85rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .75rem; color: #555; }
+    .coluna-kanban h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: .65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--ouro-lt);
+      opacity: .7;
+      margin-bottom: .75rem;
+    }
     .card-kanban {
-      background: #f8f8fb; border: 1px solid #ddd; border-radius: 4px;
-      padding: .65rem .8rem; margin-bottom: .5rem; cursor: grab; font-size: .875rem;
+      background: rgba(237,229,206,0.06);
+      border: 1px solid var(--dash-border);
+      padding: .6rem .8rem;
+      margin-bottom: .45rem;
+      cursor: grab;
+      font-size: .82rem;
+      color: rgba(237,229,206,0.75);
+      border-left: 2px solid var(--bordo-lt);
     }
-    .card-kanban:active { cursor: grabbing; opacity: .7; }
-    .nova-tarefa { margin-top: 1rem; display: flex; gap: .5rem; }
-    .nova-tarefa input { flex: 1; padding: .55rem .75rem; border: 1px solid #ccc; border-radius: 4px; font-size: .875rem; }
-    .nova-tarefa button { background: var(--bordo); color: var(--creme); border: none; padding: .55rem 1rem; border-radius: 0; cursor: pointer; font-size: .8rem; letter-spacing: .08em; }
+    .card-kanban:active { cursor: grabbing; opacity: .6; }
+    .nova-tarefa { margin-top: 1rem; display: flex; gap: .5rem; flex-wrap: wrap; }
+    .nova-tarefa input {
+      flex: 1;
+      min-width: 160px;
+      padding: .55rem .75rem;
+      border: 1px solid var(--dash-border);
+      background: var(--dash-surface);
+      color: var(--creme);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .875rem;
+      outline: none;
+    }
+    .nova-tarefa input:focus { border-color: var(--ouro-lt); }
+    .nova-tarefa button {
+      background: var(--bordo);
+      color: var(--creme);
+      border: none;
+      padding: .55rem 1rem;
+      cursor: pointer;
+      font-family: 'Syne', sans-serif;
+      font-size: .68rem;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
 
-    /* Notas */
+    /* ── Notas ── */
     .item-nota {
-      background: #fff; border: 1px solid #ddd; border-radius: 6px;
-      padding: .85rem; margin-bottom: .75rem;
+      background: var(--dash-surface);
+      border: 1px solid var(--dash-border);
+      border-left: 3px solid var(--oliva-lt);
+      padding: .85rem;
+      margin-bottom: .75rem;
     }
-    .item-nota h4 { font-size: .9rem; }
-    .item-nota span { font-size: .75rem; color: #999; }
+    .item-nota h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: .82rem;
+      font-weight: 700;
+      color: var(--creme);
+    }
+    .item-nota span { font-size: .72rem; color: rgba(237,229,206,0.35); font-family: 'DM Mono', monospace; }
+
+    /* ── Produções ── */
+    .item-producao {
+      background: var(--dash-surface);
+      border: 1px solid var(--dash-border);
+      border-left: 3px solid var(--ouro);
+      padding: .9rem 1rem;
+      margin-bottom: .75rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+    .item-producao-info .prod-titulo {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: .9rem;
+      font-weight: 700;
+      color: var(--creme);
+    }
+    .item-producao-info .prod-sub {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      color: rgba(237,229,206,0.45);
+      margin-top: .25rem;
+    }
+    .prod-ano {
+      font-family: 'Syne', sans-serif;
+      font-size: .7rem;
+      font-weight: 700;
+      color: var(--ouro-lt);
+      white-space: nowrap;
+    }
+
+    /* ══ SEMESTRE — abas internas ════════════════════════════ */
+    #bloco-semestre {
+      background: rgba(0,0,0,0.2);
+      border-bottom: 1px solid var(--dash-border);
+      padding: 1.2rem 1.4rem 0;
+    }
+    .sem-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .sem-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem;
+      letter-spacing: .22em;
+      text-transform: uppercase;
+      color: var(--ouro-lt);
+      opacity: .7;
+      display: block;
+    }
+    #sem-titulo-display {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1.15rem;
+      color: var(--creme);
+      margin-top: .15rem;
+    }
+    .semestre-tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--dash-border);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+    }
+    .semestre-tabs::-webkit-scrollbar { display: none; }
+    .semestre-tab {
+      font-family: 'Syne', sans-serif;
+      font-size: .6rem;
+      font-weight: 700;
+      letter-spacing: .14em;
+      text-transform: uppercase;
+      color: var(--creme-dk);
+      opacity: .45;
+      padding: .6rem .95rem;
+      cursor: pointer;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: none;
+      white-space: nowrap;
+      transition: color .15s, opacity .15s;
+    }
+    .semestre-tab:hover { opacity: .8; }
+    .semestre-tab.ativo { color: var(--ouro-lt); opacity: 1; border-bottom-color: var(--ouro-lt); }
+
+    .semestre-painel { display: none; padding: 1.2rem 0 1.4rem; }
+    .semestre-painel.ativo { display: block; }
+
+    .sem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: .7rem;
+    }
+    .sem-card {
+      background: var(--dash-surface);
+      border: 1px solid var(--dash-border);
+      border-top: 2px solid var(--ouro);
+      padding: .9rem 1rem;
+    }
+    .sem-card h4 {
+      font-family: 'Syne', sans-serif;
+      font-size: .68rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--ouro-lt);
+      margin-bottom: .55rem;
+    }
+    .sem-card p, .sem-card li {
+      font-size: .8rem;
+      color: rgba(237,229,206,0.6);
+      line-height: 1.5;
+    }
+    .sem-card ul { padding-left: 1rem; margin-top: .3rem; }
+    .sem-card li { margin-bottom: .2rem; }
+
+    .sem-input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: none;
+      border-bottom: 1px solid rgba(237,229,206,0.12);
+      color: var(--creme);
+      font-family: 'DM Sans', sans-serif;
+      font-size: .82rem;
+      padding: .42rem .25rem;
+      margin-bottom: .38rem;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .sem-input:focus { border-bottom-color: var(--ouro-lt); }
+    .sem-input::placeholder { color: rgba(237,229,206,0.2); }
+    select.sem-input { appearance: none; background-image: none; }
+
+    .sem-btn-sm {
+      font-family: 'Syne', sans-serif;
+      font-size: .6rem;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      background: var(--bordo);
+      color: var(--creme);
+      border: none;
+      padding: .38rem .85rem;
+      cursor: pointer;
+      margin-top: .3rem;
+      transition: background .15s;
+    }
+    .sem-btn-sm:hover { background: var(--bordo-dk); }
+
+    .sem-tag {
+      display: inline-block;
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem;
+      padding: .12rem .4rem;
+      background: rgba(232,184,32,0.11);
+      color: var(--ouro-lt);
+      margin: .12rem .1rem 0 0;
+    }
+    .sem-tag.verde { background: rgba(116,137,41,0.2); color: var(--oliva-lt); }
+    .sem-tag.bordo { background: rgba(163,48,80,0.2);  color: #E08090; }
+
+    .sem-progress {
+      height: 3px;
+      background: rgba(255,255,255,0.07);
+      margin-top: .5rem;
+      overflow: hidden;
+    }
+    .sem-progress-bar {
+      height: 100%;
+      background: var(--ouro-lt);
+      transition: width .4s;
+    }
+
+    .sem-lembrete-item {
+      display: flex;
+      align-items: flex-start;
+      gap: .55rem;
+      padding: .48rem 0;
+      border-bottom: 1px solid rgba(237,229,206,0.05);
+    }
+    .sem-lembrete-item:last-child { border-bottom: none; }
+    .sem-lembrete-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--ouro-lt);
+      flex-shrink: 0;
+      margin-top: .32rem;
+    }
+    .sem-lembrete-dot.urgente { background: var(--bordo-lt); }
+    .sem-lembrete-dot.ok      { background: var(--oliva-lt); }
+
+    details > summary {
+      font-family: 'Syne', sans-serif;
+      font-size: .62rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--ouro-lt);
+      opacity: .55;
+      cursor: pointer;
+      margin: .8rem 0 .5rem;
+      list-style: none;
+    }
+    details > summary::-webkit-details-marker { display: none; }
+    details > summary::before { content: '+ '; }
+    details[open] > summary::before { content: '− '; }
+
+    /* ══ RESPONSIVIDADE ══════════════════════════════════════ */
+    @media (max-width: 640px) {
+      /* Login mobile: cena some, card centralizado */
+      #login-scene { display: none; }
+      #tela-login  {
+        background: var(--tinta);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      #login-card  {
+        position: relative;
+        bottom: auto; left: auto;
+        width: 88vw;
+        max-width: 340px;
+        align-items: center;
+        padding: 2rem 1.4rem;
+      }
+      #login-card h1 { text-align: center; }
+
+      /* Nav */
+      #dash-nav h1 { font-size: .78rem; }
+      #dash-nav .nav-back { display: none; }
+
+      /* Kanban vira coluna única */
+      #kanban { grid-template-columns: 1fr; }
+
+      /* Abas rolam horizontalmente */
+      .abas, .semestre-tabs { flex-wrap: nowrap; }
+
+      /* Painéis */
+      .painel { padding: 1rem .85rem; }
+      #bloco-semestre { padding: 1rem .85rem 0; }
+      .semestre-painel { padding: 1rem 0 1.2rem; }
+
+      /* Grade semestre: coluna única */
+      .sem-grid { grid-template-columns: 1fr; }
+      .grid-2 { grid-template-columns: 1fr !important; }
+
+      /* Nova tarefa */
+      .nova-tarefa { flex-direction: column; }
+      .nova-tarefa input, .nova-tarefa button { width: 100%; }
+
+      .item-projeto a { font-size: .72rem; word-break: break-all; }
+    }
   </style>
 </head>
 <body>
 
-<!-- TELA DE LOGIN -->
+<!-- ══════════════════════════════════════════════════════════
+     TELA DE LOGIN
+══════════════════════════════════════════════════════════ -->
 <div id="tela-login">
-  <h1>🔒 Dashboard – Renata</h1>
-  <input type="email"    id="email" placeholder="E-mail" />
-  <input type="password" id="senha" placeholder="Senha" />
-  <button onclick="fazerLogin()">Entrar</button>
-  <p id="erro-login"></p>
+
+  <svg id="login-scene" viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+    <!-- Fundo -->
+    <rect width="1200" height="700" fill="#18100A"/>
+    <radialGradient id="luz-teto" cx="50%" cy="0%" r="70%">
+      <stop offset="0%" stop-color="#C89012" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#18100A" stop-opacity="0"/>
+    </radialGradient>
+    <rect width="1200" height="700" fill="url(#luz-teto)"/>
+    <rect x="0" y="0" width="1200" height="340" fill="#EDE5CE" opacity="0.04"/>
+    <!-- Mesa -->
+    <rect x="0" y="400" width="1200" height="300" fill="#5A2D0C" opacity="0.95"/>
+    <line x1="0" y1="410" x2="1200" y2="416" stroke="#7A3A14" stroke-width="1.5" opacity="0.4"/>
+    <line x1="0" y1="440" x2="1200" y2="435" stroke="#7A3A14" stroke-width="1"   opacity="0.25"/>
+    <line x1="0" y1="480" x2="1200" y2="490" stroke="#3D1A06" stroke-width="2"   opacity="0.3"/>
+    <rect x="0" y="400" width="1200" height="8" fill="#3D1A06" opacity="0.8"/>
+    <rect x="0" y="370" width="1200" height="35" fill="#18100A" opacity="0.55"/>
+    <!-- Livros -->
+    <rect x="60" y="330" width="120" height="18" rx="1" fill="#7A1A30"/>
+    <rect x="60" y="330" width="4" height="18" fill="#530F20"/>
+    <text x="123" y="343" font-family="serif" font-size="7" fill="#EDE5CE" opacity="0.5" text-anchor="middle">CÓDIGO PENAL</text>
+    <rect x="65" y="312" width="108" height="18" rx="1" fill="#4E5C1E"/>
+    <rect x="65" y="312" width="4" height="18" fill="#323C12"/>
+    <text x="120" y="325" font-family="serif" font-size="7" fill="#EDE5CE" opacity="0.5" text-anchor="middle">CRIMINOLOGIA</text>
+    <rect x="70" y="300" width="100" height="12" rx="1" fill="#C89012" opacity="0.85"/>
+    <rect x="70" y="300" width="3" height="12" fill="#8A6008"/>
+    <rect x="148" y="290" width="3" height="22" fill="#A33050" opacity="0.9"/>
+    <!-- Toca-disco -->
+    <rect x="220" y="350" width="160" height="55" rx="3" fill="#2A1A0A"/>
+    <rect x="220" y="350" width="160" height="4" rx="2" fill="#3D2510"/>
+    <circle cx="300" cy="378" r="38" fill="#1A1A1A"/>
+    <circle cx="300" cy="378" r="36" fill="#111" stroke="#333" stroke-width="0.5"/>
+    <circle cx="300" cy="378" r="30" fill="none" stroke="#2A2A2A" stroke-width="1.5"/>
+    <circle cx="300" cy="378" r="24" fill="none" stroke="#2A2A2A" stroke-width="1"/>
+    <circle cx="300" cy="378" r="18" fill="none" stroke="#2A2A2A" stroke-width="1"/>
+    <circle cx="300" cy="378" r="12" fill="none" stroke="#333" stroke-width="0.8"/>
+    <circle cx="300" cy="378" r="8" fill="#7A1A30"/>
+    <circle cx="300" cy="378" r="2" fill="#EDE5CE" opacity="0.6"/>
+    <line x1="346" y1="356" x2="312" y2="374" stroke="#C89012" stroke-width="2.5" stroke-linecap="round"/>
+    <circle cx="346" cy="355" r="4" fill="#C89012" opacity="0.8"/>
+    <circle cx="228" cy="356" r="3" fill="#748929"/>
+    <circle cx="228" cy="356" r="5" fill="#748929" opacity="0.2"/>
+    <!-- Laptop -->
+    <rect x="440" y="372" width="220" height="6" rx="1" fill="#2A2A2A"/>
+    <rect x="445" y="245" width="210" height="132" rx="4" fill="#1A1A1A"/>
+    <rect x="447" y="247" width="206" height="128" rx="3" fill="#0D1117"/>
+    <rect x="455" y="255" width="80" height="5" rx="1" fill="#7A1A30" opacity="0.9"/>
+    <rect x="455" y="265" width="130" height="3" rx="1" fill="#EDE5CE" opacity="0.25"/>
+    <rect x="455" y="272" width="110" height="3" rx="1" fill="#EDE5CE" opacity="0.18"/>
+    <rect x="455" y="279" width="120" height="3" rx="1" fill="#EDE5CE" opacity="0.2"/>
+    <rect x="455" y="286" width="90"  height="3" rx="1" fill="#EDE5CE" opacity="0.15"/>
+    <text x="550" y="330" font-family="Georgia, serif" font-size="15" font-style="italic" fill="#E8B820" opacity="0.85" text-anchor="middle">Criminologia</text>
+    <text x="550" y="348" font-family="monospace" font-size="7" fill="#748929" opacity="0.7" text-anchor="middle">UNEB · Direito · Pesquisa</text>
+    <rect x="455" y="355" width="2" height="10" fill="#E8B820" opacity="0.8">
+      <animate attributeName="opacity" values="0.8;0;0.8" dur="1.2s" repeatCount="indefinite"/>
+    </rect>
+    <rect x="444" y="375" width="212" height="4" rx="1" fill="#333"/>
+    <!-- Violino -->
+    <ellipse cx="830" cy="398" rx="18" ry="4" fill="#000" opacity="0.35"/>
+    <ellipse cx="830" cy="360" rx="22" ry="26" fill="#8B4513"/>
+    <rect x="820" y="350" width="20" height="14" fill="#7A3A10"/>
+    <ellipse cx="830" cy="320" rx="18" ry="22" fill="#8B4513"/>
+    <ellipse cx="824" cy="310" rx="5" ry="8" fill="#C8701A" opacity="0.4"/>
+    <rect x="828" y="384" width="4" height="8" fill="#5A2A08"/>
+    <rect x="826" y="346" width="8" height="5" rx="1" fill="#EDE5CE" opacity="0.7"/>
+    <line x1="830" y1="295" x2="830" y2="384" stroke="#EDE5CE" stroke-width="0.5" opacity="0.6"/>
+    <line x1="828" y1="295" x2="828" y2="384" stroke="#EDE5CE" stroke-width="0.4" opacity="0.5"/>
+    <line x1="832" y1="295" x2="832" y2="384" stroke="#EDE5CE" stroke-width="0.4" opacity="0.5"/>
+    <line x1="826" y1="295" x2="826" y2="384" stroke="#EDE5CE" stroke-width="0.3" opacity="0.4"/>
+    <rect x="826" y="288" width="8" height="14" rx="1" fill="#5A2A08"/>
+    <circle cx="824" cy="291" r="2" fill="#C89012" opacity="0.8"/>
+    <circle cx="836" cy="291" r="2" fill="#C89012" opacity="0.8"/>
+    <circle cx="824" cy="297" r="2" fill="#C89012" opacity="0.8"/>
+    <circle cx="836" cy="297" r="2" fill="#C89012" opacity="0.8"/>
+    <line x1="858" y1="280" x2="862" y2="400" stroke="#8B4513" stroke-width="3" stroke-linecap="round"/>
+    <line x1="858" y1="280" x2="862" y2="400" stroke="#EDE5CE" stroke-width="0.8" opacity="0.5"/>
+    <!-- Pinscher marrom (sentado na mesa) -->
+    <ellipse cx="980" cy="390" rx="28" ry="20" fill="#8B4513"/>
+    <circle cx="980" cy="362" r="18" fill="#8B4513"/>
+    <ellipse cx="980" cy="369" rx="9" ry="6" fill="#6B3010"/>
+    <ellipse cx="980" cy="366" rx="4" ry="2.5" fill="#1A0A00"/>
+    <circle cx="974" cy="358" r="3.5" fill="#1A0A00"/>
+    <circle cx="986" cy="358" r="3.5" fill="#1A0A00"/>
+    <circle cx="975" cy="357" r="1" fill="#EDE5CE" opacity="0.8"/>
+    <circle cx="987" cy="357" r="1" fill="#EDE5CE" opacity="0.8"/>
+    <ellipse cx="965" cy="360" rx="7" ry="12" fill="#6B3010" transform="rotate(-15,965,360)"/>
+    <ellipse cx="995" cy="360" rx="7" ry="12" fill="#6B3010" transform="rotate(15,995,360)"/>
+    <ellipse cx="967" cy="405" rx="7" ry="5" fill="#7A3A10"/>
+    <ellipse cx="993" cy="405" rx="7" ry="5" fill="#7A3A10"/>
+    <path d="M1006,382 Q1025,365 1020,350" stroke="#8B4513" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <!-- Pinscher preto (deitado no chão) -->
+    <ellipse cx="120" cy="460" rx="45" ry="18" fill="#1A1A1A"/>
+    <circle cx="158" cy="450" r="16" fill="#1A1A1A"/>
+    <ellipse cx="168" cy="455" rx="8" ry="5" fill="#0A0A0A"/>
+    <ellipse cx="172" cy="453" rx="3.5" ry="2" fill="#111"/>
+    <circle cx="160" cy="447" r="3" fill="#2A1A00"/>
+    <circle cx="154" cy="448" r="3" fill="#2A1A00"/>
+    <circle cx="160.8" cy="446.2" r="1" fill="#C89012" opacity="0.6"/>
+    <ellipse cx="145" cy="445" rx="6" ry="10" fill="#0A0A0A" transform="rotate(-20,145,445)"/>
+    <ellipse cx="168" cy="443" rx="5" ry="9" fill="#0A0A0A" transform="rotate(10,168,443)"/>
+    <ellipse cx="85" cy="468" rx="14" ry="7" fill="#111"/>
+    <ellipse cx="115" cy="472" rx="14" ry="6" fill="#0A0A0A"/>
+    <!-- Xícara -->
+    <ellipse cx="700" cy="408" rx="20" ry="6" fill="#3D1A06" opacity="0.5"/>
+    <path d="M682,390 Q680,410 720,410 Q720,390 682,390" fill="#EDE5CE" opacity="0.9"/>
+    <ellipse cx="701" cy="390" rx="19" ry="5" fill="#C8BEA0"/>
+    <ellipse cx="701" cy="390" rx="15" ry="3.5" fill="#4A2010"/>
+    <path d="M720,393 Q732,393 732,400 Q732,407 720,407" stroke="#EDE5CE" stroke-width="3" fill="none" opacity="0.85"/>
+    <ellipse cx="701" cy="412" rx="24" ry="5" fill="#C8BEA0" opacity="0.7"/>
+    <!-- Caderno -->
+    <rect x="740" y="382" width="130" height="90" rx="2" fill="#F5F0E8" opacity="0.92"/>
+    <rect x="803" y="382" width="3" height="90" fill="#C8BEA0" opacity="0.6"/>
+    <line x1="750" y1="398" x2="800" y2="398" stroke="#C8BEA0" stroke-width="0.8" opacity="0.7"/>
+    <line x1="750" y1="408" x2="800" y2="408" stroke="#C8BEA0" stroke-width="0.8" opacity="0.7"/>
+    <line x1="750" y1="418" x2="800" y2="418" stroke="#C8BEA0" stroke-width="0.8" opacity="0.7"/>
+    <line x1="750" y1="428" x2="800" y2="428" stroke="#C8BEA0" stroke-width="0.8" opacity="0.7"/>
+    <rect x="751" y="394" width="35" height="2" rx="1" fill="#7A1A30" opacity="0.6"/>
+    <rect x="751" y="404" width="42" height="1.5" rx="1" fill="#18100A" opacity="0.25"/>
+    <line x1="812" y1="398" x2="862" y2="398" stroke="#C8BEA0" stroke-width="0.8" opacity="0.7"/>
+    <line x1="812" y1="408" x2="862" y2="408" stroke="#C8BEA0" stroke-width="0.8" opacity="0.7"/>
+    <!-- Spot de luz -->
+    <radialGradient id="spot" cx="50%" cy="55%" r="35%">
+      <stop offset="0%"   stop-color="#E8B820" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#E8B820" stop-opacity="0"/>
+    </radialGradient>
+    <rect width="1200" height="700" fill="url(#spot)"/>
+    <!-- Motivo Lavater decorativo -->
+    <g transform="translate(1080,40)" opacity="0.12">
+      <circle cx="52" cy="52" r="6" fill="#EDE5CE"/>
+      <circle cx="52" cy="14" r="7" fill="#7A1A30"/>
+      <circle cx="84" cy="32" r="6" fill="#E8B820"/>
+      <circle cx="84" cy="72" r="8" fill="#4E5C1E"/>
+      <circle cx="52" cy="90" r="6" fill="#E8B820"/>
+      <circle cx="20" cy="72" r="5" fill="#748929"/>
+      <circle cx="20" cy="32" r="6" fill="#A33050"/>
+      <line x1="52" y1="52" x2="52" y2="18"  stroke="#EDE5CE" stroke-width="0.75"/>
+      <line x1="52" y1="52" x2="82" y2="34"  stroke="#EDE5CE" stroke-width="0.75"/>
+      <line x1="52" y1="52" x2="82" y2="70"  stroke="#EDE5CE" stroke-width="0.75"/>
+      <line x1="52" y1="52" x2="52" y2="86"  stroke="#EDE5CE" stroke-width="0.75"/>
+      <line x1="52" y1="52" x2="22" y2="70"  stroke="#EDE5CE" stroke-width="0.75"/>
+      <line x1="52" y1="52" x2="22" y2="34"  stroke="#EDE5CE" stroke-width="0.75"/>
+    </g>
+  </svg>
+
+  <div id="login-card">
+    <h1>Renata Oliveira</h1>
+    <span class="login-sub">painel · acesso restrito</span>
+    <input type="email"    id="login-email" placeholder="e-mail" autocomplete="username"/>
+    <input type="password" id="login-senha" placeholder="senha"  autocomplete="current-password"/>
+    <button onclick="fazerLogin()">Entrar</button>
+    <p id="erro-login"></p>
+  </div>
 </div>
 
-<!-- DASHBOARD -->
+<!-- ══════════════════════════════════════════════════════════
+     DASHBOARD
+══════════════════════════════════════════════════════════ -->
 <div id="dashboard">
-  <nav>
-    <div style="display:flex;align-items:center;gap:1.4rem">
-      <a href="index.html" style="color:var(--ouro-lt);font-size:.65rem;letter-spacing:.18em;text-transform:uppercase;text-decoration:none;font-weight:700;opacity:.75;font-family:system-ui">← Site</a>
+
+  <!-- Nav topo -->
+  <nav id="dash-nav">
+    <div class="nav-left">
+      <a class="nav-back" href="index.html">← Site</a>
       <h1>Dashboard · Renata Oliveira</h1>
     </div>
-    <button onclick="fazerLogout()">Sair</button>
+    <div class="nav-right">
+      <button onclick="fazerLogout()">Sair</button>
+    </div>
   </nav>
 
+  <!-- ══ BLOCO SEMESTRE ══════════════════════════════════════ -->
+  <div id="bloco-semestre">
+    <div class="sem-header">
+      <div>
+        <span class="sem-eyebrow">Semestre atual</span>
+        <div id="sem-titulo-display">2025.2</div>
+      </div>
+      <input class="sem-input" id="sem-titulo-input" placeholder="ex: 2025.2"
+             style="width:90px;font-size:.75rem;text-align:right"
+             onchange="salvarSemestre()"/>
+    </div>
+
+    <div class="semestre-tabs">
+      <button class="semestre-tab ativo" onclick="abrirAba('disciplinas',this)">Disciplinas</button>
+      <button class="semestre-tab"       onclick="abrirAba('trabalhos',this)">Trabalhos</button>
+      <button class="semestre-tab"       onclick="abrirAba('financas',this)">Finanças</button>
+      <button class="semestre-tab"       onclick="abrirAba('carreira',this)">Carreira</button>
+      <button class="semestre-tab"       onclick="abrirAba('estagio',this)">Estágio</button>
+      <button class="semestre-tab"       onclick="abrirAba('lembretes',this)">Lembretes</button>
+    </div>
+
+    <!-- DISCIPLINAS -->
+    <div class="semestre-painel ativo" id="painel-disciplinas">
+      <div class="sem-grid" id="lista-disciplinas">
+        <p style="color:rgba(237,229,206,0.3);font-size:.8rem">Nenhuma disciplina ainda.</p>
+      </div>
+      <details>
+        <summary>Adicionar disciplina</summary>
+        <div class="sem-grid grid-2" style="grid-template-columns:1fr 1fr;margin-top:.5rem">
+          <input class="sem-input" id="disc-nome"  placeholder="Nome da disciplina"/>
+          <input class="sem-input" id="disc-prof"  placeholder="Professor(a)"/>
+          <input class="sem-input" id="disc-dias"  placeholder="Dias/horário"/>
+          <input class="sem-input" id="disc-nota"  placeholder="Nota atual"/>
+        </div>
+        <button class="sem-btn-sm" onclick="adicionarDisciplina()">Salvar disciplina</button>
+      </details>
+    </div>
+
+    <!-- TRABALHOS -->
+    <div class="semestre-painel" id="painel-trabalhos">
+      <div id="lista-trabalhos">
+        <p style="color:rgba(237,229,206,0.3);font-size:.8rem">Nenhum trabalho ainda.</p>
+      </div>
+      <details>
+        <summary>Adicionar trabalho</summary>
+        <div class="sem-grid grid-2" style="grid-template-columns:1fr 1fr;margin-top:.5rem">
+          <input class="sem-input" id="trab-titulo"  placeholder="Título do trabalho"/>
+          <input class="sem-input" id="trab-disc"    placeholder="Disciplina"/>
+          <input class="sem-input" id="trab-entrega" placeholder="Data de entrega" type="date"/>
+          <select class="sem-input" id="trab-status">
+            <option value="pendente">Pendente</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="entregue">Entregue</option>
+          </select>
+        </div>
+        <button class="sem-btn-sm" onclick="adicionarTrabalho()">Salvar trabalho</button>
+      </details>
+    </div>
+
+    <!-- FINANÇAS -->
+    <div class="semestre-painel" id="painel-financas">
+      <div class="sem-grid">
+        <div class="sem-card">
+          <h4>Entradas do mês</h4>
+          <p id="fin-entradas" style="font-size:1.15rem;color:var(--ouro-lt);font-weight:700">R$ 0,00</p>
+          <input class="sem-input" id="fin-entrada-val"  placeholder="Valor" type="number" style="margin-top:.5rem"/>
+          <input class="sem-input" id="fin-entrada-desc" placeholder="Descrição"/>
+          <button class="sem-btn-sm" onclick="adicionarFinanca('entrada')">+ Entrada</button>
+        </div>
+        <div class="sem-card">
+          <h4>Saídas do mês</h4>
+          <p id="fin-saidas" style="font-size:1.15rem;color:#E08090;font-weight:700">R$ 0,00</p>
+          <input class="sem-input" id="fin-saida-val"  placeholder="Valor" type="number" style="margin-top:.5rem"/>
+          <input class="sem-input" id="fin-saida-desc" placeholder="Descrição"/>
+          <button class="sem-btn-sm" onclick="adicionarFinanca('saida')">+ Saída</button>
+        </div>
+        <div class="sem-card">
+          <h4>Saldo</h4>
+          <p id="fin-saldo" style="font-size:1.3rem;font-weight:700;color:var(--creme)">R$ 0,00</p>
+          <div class="sem-progress"><div class="sem-progress-bar" id="fin-progress" style="width:0%"></div></div>
+          <p style="font-size:.62rem;color:rgba(237,229,206,0.28);margin-top:.35rem">meta mensal</p>
+          <input class="sem-input" id="fin-meta" placeholder="Meta mensal (R$)" type="number" style="margin-top:.35rem" onchange="salvarMeta()"/>
+        </div>
+      </div>
+      <div style="margin-top:.8rem" id="fin-historico"></div>
+    </div>
+
+    <!-- CARREIRA -->
+    <div class="semestre-painel" id="painel-carreira">
+      <div class="sem-grid">
+        <div class="sem-card">
+          <h4>Plano de carreira</h4>
+          <textarea class="sem-input" id="carr-plano" rows="5"
+            placeholder="Onde quero chegar... Ex: advocacia criminal, pesquisa acadêmica, IBCCRIM..."
+            style="resize:vertical;padding:.4rem;line-height:1.5"></textarea>
+          <button class="sem-btn-sm" onclick="salvarCarreira()">Salvar</button>
+        </div>
+        <div class="sem-card">
+          <h4>Concursos no radar</h4>
+          <div id="lista-concursos"></div>
+          <input class="sem-input" id="conc-nome"   placeholder="Nome do concurso" style="margin-top:.5rem"/>
+          <input class="sem-input" id="conc-data"   type="date"/>
+          <input class="sem-input" id="conc-status" placeholder="Status (estudando, inscrito...)"/>
+          <button class="sem-btn-sm" onclick="adicionarConcurso()">+ Concurso</button>
+        </div>
+        <div class="sem-card">
+          <h4>Participações &amp; eventos</h4>
+          <div id="lista-eventos-carr"></div>
+          <input class="sem-input" id="ev-nome" placeholder="Evento / IBCCRIM / LADI..." style="margin-top:.5rem"/>
+          <input class="sem-input" id="ev-data" type="date"/>
+          <button class="sem-btn-sm" onclick="adicionarEventoCarr()">+ Evento</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ESTÁGIO -->
+    <div class="semestre-painel" id="painel-estagio">
+      <div class="sem-grid">
+        <div class="sem-card">
+          <h4>Vaga atual</h4>
+          <input class="sem-input" id="est-local"   placeholder="Local / escritório"/>
+          <input class="sem-input" id="est-area"    placeholder="Área (penal, civil...)"/>
+          <input class="sem-input" id="est-horario" placeholder="Horário"/>
+          <input class="sem-input" id="est-bolsa"   placeholder="Bolsa (R$)" type="number"/>
+          <button class="sem-btn-sm" onclick="salvarEstagio()">Salvar</button>
+        </div>
+        <div class="sem-card">
+          <h4>Demandas abertas</h4>
+          <div id="lista-demandas"></div>
+          <input class="sem-input" id="dem-titulo" placeholder="Demanda / tarefa" style="margin-top:.5rem"/>
+          <input class="sem-input" id="dem-prazo"  type="date"/>
+          <button class="sem-btn-sm" onclick="adicionarDemanda()">+ Demanda</button>
+        </div>
+        <div class="sem-card">
+          <h4>Processos acompanhados</h4>
+          <div id="lista-processos"></div>
+          <input class="sem-input" id="proc-num"  placeholder="Número / referência" style="margin-top:.5rem"/>
+          <input class="sem-input" id="proc-desc" placeholder="Descrição breve"/>
+          <button class="sem-btn-sm" onclick="adicionarProcesso()">+ Processo</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LEMBRETES -->
+    <div class="semestre-painel" id="painel-lembretes">
+      <div style="max-width:560px">
+        <div id="lista-lembretes">
+          <p style="color:rgba(237,229,206,0.3);font-size:.8rem">Nenhum lembrete ainda.</p>
+        </div>
+        <div style="display:flex;gap:.45rem;margin-top:.8rem;flex-wrap:wrap">
+          <input class="sem-input" id="lem-texto" placeholder="Lembrete..." style="flex:1;min-width:160px"/>
+          <input class="sem-input" id="lem-data"  type="date" style="width:130px"/>
+          <select class="sem-input" id="lem-tipo" style="width:110px">
+            <option value="normal">Normal</option>
+            <option value="urgente">Urgente</option>
+            <option value="ok">Concluído</option>
+          </select>
+          <button class="sem-btn-sm" onclick="adicionarLembrete()">+ Lembrete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- FIM SEMESTRE -->
+
+  <!-- ══ ABAS PRINCIPAIS ════════════════════════════════════ -->
   <div class="abas">
-    <button class="aba ativa" onclick="mudarAba('perfil', this)">Perfil</button>
-    <button class="aba"       onclick="mudarAba('projetos', this)">Projetos</button>
-    <button class="aba"       onclick="mudarAba('tarefas', this)">Tarefas</button>
-    <button class="aba"       onclick="mudarAba('notas', this)">Notas</button>
+    <button class="aba ativa" onclick="mudarAba('perfil',this)">Perfil</button>
+    <button class="aba"       onclick="mudarAba('projetos',this)">Projetos</button>
+    <button class="aba"       onclick="mudarAba('producoes',this)">Produções</button>
+    <button class="aba"       onclick="mudarAba('tarefas',this)">Tarefas</button>
+    <button class="aba"       onclick="mudarAba('notas',this)">Notas</button>
   </div>
 
   <!-- ABA PERFIL -->
   <div id="painel-perfil" class="painel ativo">
-    <h2 style="margin-bottom:1.25rem">Editar Perfil Público</h2>
-    <div class="campo"><label>Nome</label><input type="text" id="p-nome" placeholder="Renata Oliveira Nascimento" /></div>
+    <h2 class="painel-titulo">Editar Perfil Público</h2>
+    <div class="campo"><label>Nome</label><input type="text" id="p-nome" placeholder="Renata Oliveira Nascimento"/></div>
     <div class="campo"><label>Bio curta</label><textarea id="p-bio" placeholder="Graduanda em Direito..."></textarea></div>
-    <div class="campo"><label>URL do LinkedIn</label><input type="url" id="p-linkedin" placeholder="https://linkedin.com/in/..." /></div>
-    <div class="campo"><label>URL da foto de perfil</label><input type="url" id="p-foto" placeholder="https://..." /></div>
+    <div class="campo"><label>URL do LinkedIn</label><input type="url" id="p-linkedin" placeholder="https://linkedin.com/in/..."/></div>
+    <div class="campo"><label>URL da foto de perfil</label><input type="url" id="p-foto" placeholder="https://..."/></div>
     <button class="btn-salvar" onclick="salvarPerfil()">Salvar perfil</button>
     <p id="status-perfil" class="msg-status"></p>
   </div>
 
   <!-- ABA PROJETOS -->
   <div id="painel-projetos" class="painel">
-    <h2 style="margin-bottom:1.25rem">Adicionar Projeto</h2>
-    <div class="campo"><label>Título</label><input type="text" id="proj-titulo" placeholder="Nome do projeto" /></div>
+    <h2 class="painel-titulo">Projetos</h2>
+    <div class="campo"><label>Título</label><input type="text" id="proj-titulo" placeholder="Nome do projeto"/></div>
     <div class="campo"><label>Descrição</label><textarea id="proj-desc" placeholder="Breve descrição..."></textarea></div>
-    <div class="campo"><label>Tags (separadas por vírgula)</label><input type="text" id="proj-tags" placeholder="Direito, Pesquisa, IBCCRIM" /></div>
-    <div class="campo"><label>URL do projeto</label><input type="url" id="proj-url" placeholder="https://..." /></div>
+    <div class="campo"><label>Tags (separadas por vírgula)</label><input type="text" id="proj-tags" placeholder="Direito, Pesquisa, IBCCRIM"/></div>
+    <div class="campo"><label>URL do projeto</label><input type="url" id="proj-url" placeholder="https://..."/></div>
     <button class="btn-salvar" onclick="adicionarProjeto()">Adicionar projeto</button>
     <p id="status-projeto" class="msg-status"></p>
-    <div id="lista-projetos-dash"><p style="color:#999;font-size:.875rem">Carregando projetos...</p></div>
+    <div id="lista-projetos-dash" style="margin-top:1.5rem">
+      <p style="color:rgba(237,229,206,0.3);font-size:.875rem">Carregando projetos...</p>
+    </div>
+  </div>
+
+  <!-- ABA PRODUÇÕES -->
+  <div id="painel-producoes" class="painel">
+    <h2 class="painel-titulo">Produções Acadêmicas</h2>
+    <div class="campo"><label>Título</label><input type="text" id="prod-titulo" placeholder="Título do artigo / capítulo..."/></div>
+    <div class="campo"><label>Autores (separados por vírgula)</label><input type="text" id="prod-autores" placeholder="Renata Oliveira, Isaac Santana Santos Pires, Késia Melanie Gardella"/></div>
+    <div class="campo"><label>Venue (evento, revista, livro)</label><input type="text" id="prod-venue" placeholder="Anais do VI CODIRI — Segurança e Governança Global"/></div>
+    <div class="campo"><label>Ano</label><input type="number" id="prod-ano" placeholder="2024" min="2000" max="2100"/></div>
+    <div class="campo"><label>URL (opcional)</label><input type="url" id="prod-url" placeholder="https://..."/></div>
+    <button class="btn-salvar" onclick="adicionarProducao()">Adicionar produção</button>
+    <p id="status-producao" class="msg-status"></p>
+    <div id="lista-producoes-dash" style="margin-top:1.5rem">
+      <p style="color:rgba(237,229,206,0.3);font-size:.875rem">Carregando produções...</p>
+    </div>
   </div>
 
   <!-- ABA TAREFAS -->
   <div id="painel-tarefas" class="painel">
-    <h2 style="margin-bottom:1rem">Quadro de Tarefas</h2>
+    <h2 class="painel-titulo">Quadro de Tarefas</h2>
     <div id="kanban">
       <div class="coluna-kanban" id="col-todo"
            ondragover="event.preventDefault()" ondrop="soltarCartao(event,'todo')">
-        <h3>📋 A Fazer</h3>
+        <h3>A Fazer</h3>
       </div>
       <div class="coluna-kanban" id="col-doing"
            ondragover="event.preventDefault()" ondrop="soltarCartao(event,'doing')">
-        <h3>⚙️ Fazendo</h3>
+        <h3>Fazendo</h3>
       </div>
       <div class="coluna-kanban" id="col-done"
            ondragover="event.preventDefault()" ondrop="soltarCartao(event,'done')">
-        <h3>✅ Concluído</h3>
+        <h3>Concluído</h3>
       </div>
     </div>
     <div class="nova-tarefa">
-      <input type="text" id="nova-tarefa-titulo" placeholder="Nova tarefa..." />
+      <input type="text" id="nova-tarefa-titulo" placeholder="Nova tarefa..."/>
       <button onclick="adicionarTarefa()">Adicionar</button>
     </div>
     <p id="status-tarefa" class="msg-status"></p>
@@ -208,23 +1064,28 @@ nav {
 
   <!-- ABA NOTAS -->
   <div id="painel-notas" class="painel">
-    <h2 style="margin-bottom:1.25rem">Notas de Estudo</h2>
-    <p style="font-size:.85rem;color:#666;margin-bottom:1rem">
-      ⚠️ Versão de teste — Editor.js será integrado depois. Por enquanto texto puro, compatível com a vitrine.
+    <h2 class="painel-titulo">Notas de Estudo</h2>
+    <p style="font-size:.8rem;color:rgba(237,229,206,0.35);margin-bottom:1rem">
+      Versão de texto puro — compatível com a vitrine pública.
     </p>
-    <div class="campo"><label>Título da nota</label><input type="text" id="nota-titulo" placeholder="Ex: Criminologia Crítica – Resumo" /></div>
-    <div class="campo">
-      <label>Conteúdo (separe parágrafos com uma linha em branco)</label>
-      <textarea id="nota-corpo" style="min-height:200px" placeholder="Escreva aqui..."></textarea>
+    <div class="campo"><label>Título da nota</label><input type="text" id="nota-titulo" placeholder="Ex: Criminologia Crítica – Resumo"/></div>
+    <div class="campo"><label>Conteúdo (separe parágrafos com linha em branco)</label>
+      <textarea id="nota-corpo" style="min-height:180px" placeholder="Escreva aqui..."></textarea>
     </div>
     <button class="btn-salvar" onclick="salvarNota()">Salvar nota</button>
     <p id="status-nota" class="msg-status"></p>
-    <div id="lista-notas" style="margin-top:1.5rem"><p style="color:#999;font-size:.875rem">Carregando notas...</p></div>
+    <div id="lista-notas" style="margin-top:1.5rem">
+      <p style="color:rgba(237,229,206,0.3);font-size:.875rem">Carregando notas...</p>
+    </div>
   </div>
-</div>
 
+</div><!-- #dashboard -->
+
+<!-- ══════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════ -->
 <script>
-  // ── Firebase ─────────────────────────────────────────────
+  /* ── Firebase init ──────────────────────────────────────── */
   const firebaseConfig = {
     apiKey: "AIzaSyA-mizRLLIB3EvWxs6Xa6hTHaeSQj9jPaw",
     authDomain: "renata-d1eba.firebaseapp.com",
@@ -239,29 +1100,29 @@ nav {
 
   let draggedId = null;
 
-  // ── Helpers ───────────────────────────────────────────────
+  /* ── Helpers ────────────────────────────────────────────── */
   function setStatus(id, msg, tipo = 'ok') {
     const el = document.getElementById(id);
+    if (!el) return;
     el.textContent = msg;
     el.className   = 'msg-status ' + (tipo === 'ok' ? 'msg-ok' : 'msg-err');
-    setTimeout(() => el.textContent = '', 4000);
+    setTimeout(() => { el.textContent = ''; }, 4000);
   }
+  const fmt = v => 'R$ ' + Number(v).toFixed(2).replace('.', ',');
 
-  // ── Auth ──────────────────────────────────────────────────
+  /* ── Auth ───────────────────────────────────────────────── */
   async function fazerLogin() {
-    const email = document.getElementById('email').value.trim();
-    const senha = document.getElementById('senha').value;
+    const email = document.getElementById('login-email').value.trim();
+    const senha = document.getElementById('login-senha').value;
+    document.getElementById('erro-login').textContent = '';
     try {
       await auth.signInWithEmailAndPassword(email, senha);
     } catch (err) {
       document.getElementById('erro-login').textContent = 'E-mail ou senha incorretos.';
-      console.error('[auth]', err.message);
     }
   }
 
-  async function fazerLogout() {
-    await auth.signOut();
-  }
+  async function fazerLogout() { await auth.signOut(); }
 
   auth.onAuthStateChanged(user => {
     if (user) {
@@ -269,15 +1130,17 @@ nav {
       document.getElementById('dashboard').style.display  = 'block';
       carregarPerfil();
       carregarProjetos();
+      carregarProducoes();
       carregarTarefas();
       carregarNotas();
+      inicializarSemestre();
     } else {
       document.getElementById('tela-login').style.display = 'flex';
       document.getElementById('dashboard').style.display  = 'none';
     }
   });
 
-  // ── Abas ──────────────────────────────────────────────────
+  /* ── Abas principais ────────────────────────────────────── */
   function mudarAba(nome, btn) {
     document.querySelectorAll('.painel').forEach(p => p.classList.remove('ativo'));
     document.querySelectorAll('.aba').forEach(b => b.classList.remove('ativa'));
@@ -285,17 +1148,17 @@ nav {
     btn.classList.add('ativa');
   }
 
-  // ── PERFIL ────────────────────────────────────────────────
+  /* ── PERFIL ─────────────────────────────────────────────── */
   async function carregarPerfil() {
     try {
       const doc = await db.collection('configuracoes_publicas').doc('info_pessoal').get();
       if (!doc.exists) return;
       const d = doc.data();
-      document.getElementById('p-nome').value    = d.nome            || '';
-      document.getElementById('p-bio').value     = d.bio_curta       || '';
-      document.getElementById('p-linkedin').value = d.linkedin_url   || '';
-      document.getElementById('p-foto').value    = d.foto_perfil_url || '';
-    } catch (err) { console.error('[perfil] carregar:', err); }
+      document.getElementById('p-nome').value     = d.nome            || '';
+      document.getElementById('p-bio').value      = d.bio_curta       || '';
+      document.getElementById('p-linkedin').value = d.linkedin_url    || '';
+      document.getElementById('p-foto').value     = d.foto_perfil_url || '';
+    } catch (err) { console.error('[perfil]', err); }
   }
 
   async function salvarPerfil() {
@@ -307,98 +1170,125 @@ nav {
     };
     try {
       await db.collection('configuracoes_publicas').doc('info_pessoal').set(dados, { merge: true });
-      setStatus('status-perfil', '✅ Perfil salvo!');
-    } catch (err) {
-      setStatus('status-perfil', '❌ Erro ao salvar.', 'err');
-      console.error('[perfil] salvar:', err);
-    }
+      setStatus('status-perfil', '✓ Perfil salvo.');
+    } catch (err) { setStatus('status-perfil', '✗ Erro ao salvar.', 'err'); }
   }
 
-  // ── PROJETOS ──────────────────────────────────────────────
+  /* ── PROJETOS ───────────────────────────────────────────── */
   async function adicionarProjeto() {
     const titulo = document.getElementById('proj-titulo').value.trim();
-    if (!titulo) { setStatus('status-projeto', '⚠️ Título obrigatório.', 'err'); return; }
+    if (!titulo) { setStatus('status-projeto', '⚠ Título obrigatório.', 'err'); return; }
     const chips_tags = document.getElementById('proj-tags').value.split(',').map(t => t.trim()).filter(Boolean);
-    const dados = {
-      titulo,
-      descricao:    document.getElementById('proj-desc').value.trim(),
-      chips_tags,
-      url_projeto:  document.getElementById('proj-url').value.trim(),
-      data_criacao: firebase.firestore.FieldValue.serverTimestamp(),
-    };
     try {
-      await db.collection('projetos').add(dados);
-      setStatus('status-projeto', '✅ Projeto adicionado!');
+      await db.collection('projetos').add({
+        titulo,
+        descricao:    document.getElementById('proj-desc').value.trim(),
+        chips_tags,
+        url_projeto:  document.getElementById('proj-url').value.trim(),
+        data_criacao: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setStatus('status-projeto', '✓ Projeto adicionado.');
       ['proj-titulo','proj-desc','proj-tags','proj-url'].forEach(id => document.getElementById(id).value = '');
       carregarProjetos();
-    } catch (err) {
-      setStatus('status-projeto', '❌ Erro ao adicionar.', 'err');
-      console.error('[projetos] adicionar:', err);
-    }
+    } catch (err) { setStatus('status-projeto', '✗ Erro.', 'err'); }
   }
 
   async function excluirProjeto(id) {
     if (!confirm('Excluir este projeto?')) return;
-    try {
-      await db.collection('projetos').doc(id).delete();
-      carregarProjetos();
-    } catch (err) { console.error('[projetos] excluir:', err); }
+    await db.collection('projetos').doc(id).delete();
+    carregarProjetos();
   }
 
   async function carregarProjetos() {
-    const container = document.getElementById('lista-projetos-dash');
+    const c = document.getElementById('lista-projetos-dash');
     try {
-      const snapshot = await db.collection('projetos').orderBy('data_criacao', 'desc').get();
-      if (snapshot.empty) {
-        container.innerHTML = '<p style="color:#999;font-size:.875rem;margin-top:1rem">Nenhum projeto ainda.</p>';
-        return;
-      }
-      container.innerHTML = '<h3 style="margin:1rem 0 .75rem;font-size:.9rem;color:#555">Projetos cadastrados</h3>';
-      snapshot.forEach(doc => {
+      const snap = await db.collection('projetos').orderBy('data_criacao', 'desc').get();
+      if (snap.empty) { c.innerHTML = '<p style="color:rgba(237,229,206,0.3);font-size:.875rem;margin-top:1rem">Nenhum projeto ainda.</p>'; return; }
+      c.innerHTML = '';
+      snap.forEach(doc => {
         const p = doc.data();
         const tags = (p.chips_tags || []).map(t => `<span class="tag">${t}</span>`).join('');
         const div = document.createElement('div');
         div.className = 'item-projeto';
         div.innerHTML = `
-          <div class="item-projeto-info">
+          <div class="item-projeto-info" style="flex:1;min-width:0">
             <h3>${p.titulo}</h3>
             <p>${p.descricao || ''}</p>
             <div class="tags">${tags}</div>
-            ${p.url_projeto ? `<a href="${p.url_projeto}" target="_blank" style="font-size:.8rem">${p.url_projeto}</a>` : ''}
+            ${p.url_projeto ? `<a href="${p.url_projeto}" target="_blank" style="font-size:.75rem;color:var(--ouro-lt)">${p.url_projeto}</a>` : ''}
           </div>
-          <button class="btn-perigo" onclick="excluirProjeto('${doc.id}')">Excluir</button>
-        `;
-        container.appendChild(div);
+          <button class="btn-perigo" onclick="excluirProjeto('${doc.id}')">Excluir</button>`;
+        c.appendChild(div);
       });
-    } catch (err) {
-      container.innerHTML = '<p style="color:#c00">Erro ao carregar projetos.</p>';
-      console.error('[projetos] carregar:', err);
-    }
+    } catch (err) { c.innerHTML = '<p style="color:#E08090">Erro ao carregar.</p>'; }
   }
 
-  // ── TAREFAS / KANBAN ──────────────────────────────────────
+  /* ── PRODUÇÕES ──────────────────────────────────────────── */
+  async function adicionarProducao() {
+    const titulo = document.getElementById('prod-titulo').value.trim();
+    if (!titulo) { setStatus('status-producao', '⚠ Título obrigatório.', 'err'); return; }
+    try {
+      await db.collection('producoes').add({
+        titulo,
+        autores:      document.getElementById('prod-autores').value.trim(),
+        venue:        document.getElementById('prod-venue').value.trim(),
+        ano:          Number(document.getElementById('prod-ano').value) || new Date().getFullYear(),
+        url:          document.getElementById('prod-url').value.trim(),
+        data_criacao: firebase.firestore.FieldValue.serverTimestamp(),
+      });
+      setStatus('status-producao', '✓ Produção adicionada.');
+      ['prod-titulo','prod-autores','prod-venue','prod-ano','prod-url'].forEach(id => document.getElementById(id).value = '');
+      carregarProducoes();
+    } catch (err) { setStatus('status-producao', '✗ Erro.', 'err'); }
+  }
+
+  async function excluirProducao(id) {
+    if (!confirm('Excluir esta produção?')) return;
+    await db.collection('producoes').doc(id).delete();
+    carregarProducoes();
+  }
+
+  async function carregarProducoes() {
+    const c = document.getElementById('lista-producoes-dash');
+    try {
+      const snap = await db.collection('producoes').orderBy('ano', 'desc').get();
+      if (snap.empty) { c.innerHTML = '<p style="color:rgba(237,229,206,0.3);font-size:.875rem;margin-top:1rem">Nenhuma produção ainda.</p>'; return; }
+      c.innerHTML = '';
+      snap.forEach(doc => {
+        const p = doc.data();
+        const div = document.createElement('div');
+        div.className = 'item-producao';
+        div.innerHTML = `
+          <div class="item-producao-info" style="flex:1;min-width:0">
+            <div class="prod-titulo">${p.titulo}</div>
+            <div class="prod-sub">${p.autores || ''}</div>
+            <div class="prod-sub">${p.venue || ''}</div>
+            ${p.url ? `<a href="${p.url}" target="_blank" style="font-size:.72rem;color:var(--ouro-lt);margin-top:.3rem;display:block">${p.url}</a>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:.5rem;flex-shrink:0">
+            <span class="prod-ano">${p.ano}</span>
+            <button class="btn-perigo" onclick="excluirProducao('${doc.id}')">Excluir</button>
+          </div>`;
+        c.appendChild(div);
+      });
+    } catch (err) { c.innerHTML = '<p style="color:#E08090">Erro ao carregar.</p>'; }
+  }
+
+  /* ── TAREFAS / KANBAN ───────────────────────────────────── */
   async function adicionarTarefa() {
     const titulo = document.getElementById('nova-tarefa-titulo').value.trim();
     if (!titulo) return;
-    try {
-      await db.collection('tarefas').add({
-        titulo,
-        status: 'todo',
-        data_criacao: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-      document.getElementById('nova-tarefa-titulo').value = '';
-      carregarTarefas();
-    } catch (err) { console.error('[tarefas] adicionar:', err); }
+    await db.collection('tarefas').add({ titulo, status: 'todo', data_criacao: firebase.firestore.FieldValue.serverTimestamp() });
+    document.getElementById('nova-tarefa-titulo').value = '';
+    carregarTarefas();
   }
 
   async function carregarTarefas() {
-    ['col-todo','col-doing','col-done'].forEach(colId => {
-      document.getElementById(colId).querySelectorAll('.card-kanban').forEach(c => c.remove());
-    });
+    ['col-todo','col-doing','col-done'].forEach(id => document.getElementById(id).querySelectorAll('.card-kanban').forEach(c => c.remove()));
     try {
-      const snapshot = await db.collection('tarefas').orderBy('data_criacao', 'asc').get();
-      snapshot.forEach(doc => renderizarCartao(doc.id, doc.data()));
-    } catch (err) { console.error('[tarefas] carregar:', err); }
+      const snap = await db.collection('tarefas').orderBy('data_criacao', 'asc').get();
+      snap.forEach(doc => renderizarCartao(doc.id, doc.data()));
+    } catch (err) { console.error('[tarefas]', err); }
   }
 
   function renderizarCartao(id, dados) {
@@ -416,78 +1306,287 @@ nav {
   async function soltarCartao(event, novoStatus) {
     event.preventDefault();
     if (!draggedId) return;
-    try {
-      await db.collection('tarefas').doc(draggedId).update({ status: novoStatus });
-      draggedId = null;
-      carregarTarefas();
-    } catch (err) { console.error('[tarefas] mover:', err); }
+    await db.collection('tarefas').doc(draggedId).update({ status: novoStatus });
+    draggedId = null;
+    carregarTarefas();
   }
 
-  // ── NOTAS ─────────────────────────────────────────────────
+  /* ── NOTAS ──────────────────────────────────────────────── */
   function textoParaEditorJS(texto) {
-    const blocos = texto.split(/\n{2,}/).map(t => t.trim()).filter(Boolean);
     return {
-      time: Date.now(),
-      version: '2.28.0',
-      blocks: blocos.map(p => ({ type: 'paragraph', data: { text: p.replace(/\n/g, '<br>') } }))
+      time: Date.now(), version: '2.28.0',
+      blocks: texto.split(/\n{2,}/).map(t => t.trim()).filter(Boolean)
+        .map(p => ({ type: 'paragraph', data: { text: p.replace(/\n/g, '<br>') } }))
     };
   }
 
   async function salvarNota() {
     const titulo = document.getElementById('nota-titulo').value.trim();
     const corpo  = document.getElementById('nota-corpo').value.trim();
-    if (!titulo || !corpo) { setStatus('status-nota', '⚠️ Preencha título e conteúdo.', 'err'); return; }
+    if (!titulo || !corpo) { setStatus('status-nota', '⚠ Preencha título e conteúdo.', 'err'); return; }
     try {
-      await db.collection('notas_notion_like').add({
-        titulo,
-        conteudo:     textoParaEditorJS(corpo),
-        data_criacao: firebase.firestore.FieldValue.serverTimestamp(),
-      });
-      setStatus('status-nota', '✅ Nota salva!');
+      await db.collection('notas_notion_like').add({ titulo, conteudo: textoParaEditorJS(corpo), data_criacao: firebase.firestore.FieldValue.serverTimestamp() });
+      setStatus('status-nota', '✓ Nota salva.');
       document.getElementById('nota-titulo').value = '';
       document.getElementById('nota-corpo').value  = '';
       carregarNotas();
-    } catch (err) {
-      setStatus('status-nota', '❌ Erro ao salvar.', 'err');
-      console.error('[notas] salvar:', err);
-    }
+    } catch (err) { setStatus('status-nota', '✗ Erro.', 'err'); }
   }
 
   async function excluirNota(id) {
     if (!confirm('Excluir esta nota?')) return;
-    try {
-      await db.collection('notas_notion_like').doc(id).delete();
-      carregarNotas();
-    } catch (err) { console.error('[notas] excluir:', err); }
+    await db.collection('notas_notion_like').doc(id).delete();
+    carregarNotas();
   }
 
   async function carregarNotas() {
-    const container = document.getElementById('lista-notas');
+    const c = document.getElementById('lista-notas');
     try {
-      const snapshot = await db.collection('notas_notion_like').orderBy('data_criacao', 'desc').get();
-      if (snapshot.empty) {
-        container.innerHTML = '<p style="color:#999;font-size:.875rem">Nenhuma nota ainda.</p>';
-        return;
-      }
-      container.innerHTML = '<h3 style="margin-bottom:.75rem;font-size:.9rem;color:#555">Notas salvas</h3>';
-      snapshot.forEach(doc => {
+      const snap = await db.collection('notas_notion_like').orderBy('data_criacao', 'desc').get();
+      if (snap.empty) { c.innerHTML = '<p style="color:rgba(237,229,206,0.3);font-size:.875rem">Nenhuma nota ainda.</p>'; return; }
+      c.innerHTML = '';
+      snap.forEach(doc => {
         const n  = doc.data();
         const ts = n.data_criacao?.toDate?.()?.toLocaleDateString('pt-BR') || '–';
         const div = document.createElement('div');
         div.className = 'item-nota';
         div.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:.5rem">
             <h4>${n.titulo}</h4>
             <button class="btn-perigo" onclick="excluirNota('${doc.id}')">Excluir</button>
           </div>
-          <span>${ts} · ${n.conteudo?.blocks?.length || 0} bloco(s)</span>
-        `;
-        container.appendChild(div);
+          <span>${ts} · ${n.conteudo?.blocks?.length || 0} bloco(s)</span>`;
+        c.appendChild(div);
       });
-    } catch (err) {
-      container.innerHTML = '<p style="color:#c00">Erro ao carregar notas.</p>';
-      console.error('[notas] carregar:', err);
+    } catch (err) { c.innerHTML = '<p style="color:#E08090">Erro ao carregar.</p>'; }
+  }
+
+  /* ══════════════════════════════════════════════════════════
+     SEMESTRE
+  ══════════════════════════════════════════════════════════ */
+
+  function abrirAba(id, btn) {
+    document.querySelectorAll('.semestre-painel').forEach(p => p.classList.remove('ativo'));
+    document.querySelectorAll('.semestre-tab').forEach(b => b.classList.remove('ativo'));
+    document.getElementById('painel-' + id).classList.add('ativo');
+    btn.classList.add('ativo');
+  }
+
+  /* helpers Firestore para semestre */
+  async function semGet(col) {
+    try { const s = await db.collection('semestre_' + col).get(); return s.docs.map(d => ({ id: d.id, ...d.data() })); }
+    catch(e) { return []; }
+  }
+  async function semAdd(col, dados) { return db.collection('semestre_' + col).add({ ...dados, criado: new Date() }); }
+  async function semDel(col, id)    { return db.collection('semestre_' + col).doc(id).delete(); }
+  async function semSet(doc, dados) { return db.collection('semestre_config').doc(doc).set(dados, { merge: true }); }
+  async function semGetDoc(doc) {
+    try { const d = await db.collection('semestre_config').doc(doc).get(); return d.exists ? d.data() : {}; }
+    catch(e) { return {}; }
+  }
+
+  /* semestre título */
+  async function carregarSemestre() {
+    const cfg = await semGetDoc('geral');
+    if (cfg.titulo) {
+      document.getElementById('sem-titulo-display').textContent = cfg.titulo;
+      document.getElementById('sem-titulo-input').value = cfg.titulo;
     }
+  }
+  async function salvarSemestre() {
+    const v = document.getElementById('sem-titulo-input').value.trim();
+    if (v) { document.getElementById('sem-titulo-display').textContent = v; await semSet('geral', { titulo: v }); }
+  }
+
+  /* disciplinas */
+  async function carregarDisciplinas() {
+    const items = await semGet('disciplinas');
+    const c = document.getElementById('lista-disciplinas');
+    if (!items.length) { c.innerHTML = '<p style="color:rgba(237,229,206,0.3);font-size:.8rem">Nenhuma disciplina ainda.</p>'; return; }
+    c.innerHTML = items.map(d => `
+      <div class="sem-card">
+        <h4>${d.nome||''} <span style="float:right;cursor:pointer;opacity:.35;font-size:.65rem" onclick="semDel('disciplinas','${d.id}').then(carregarDisciplinas)">✕</span></h4>
+        <p><span class="sem-tag">${d.dias||''}</span></p>
+        ${d.prof ? `<p style="font-size:.72rem;opacity:.4;margin-top:.3rem">Prof. ${d.prof}</p>` : ''}
+        ${d.nota ? `<p style="margin-top:.35rem"><span class="sem-tag verde">Nota: ${d.nota}</span></p>` : ''}
+      </div>`).join('');
+  }
+  async function adicionarDisciplina() {
+    const nome = document.getElementById('disc-nome').value.trim();
+    if (!nome) return;
+    await semAdd('disciplinas', { nome, prof: document.getElementById('disc-prof').value, dias: document.getElementById('disc-dias').value, nota: document.getElementById('disc-nota').value });
+    ['disc-nome','disc-prof','disc-dias','disc-nota'].forEach(id => document.getElementById(id).value = '');
+    carregarDisciplinas();
+  }
+
+  /* trabalhos */
+  async function carregarTrabalhos() {
+    const items = await semGet('trabalhos');
+    const c = document.getElementById('lista-trabalhos');
+    if (!items.length) { c.innerHTML = '<p style="color:rgba(237,229,206,0.3);font-size:.8rem">Nenhum trabalho ainda.</p>'; return; }
+    const cor = { pendente:'bordo', em_andamento:'', entregue:'verde' };
+    c.innerHTML = `<div class="sem-grid">${items.map(t => `
+      <div class="sem-card">
+        <h4>${t.titulo||''} <span style="float:right;cursor:pointer;opacity:.35;font-size:.65rem" onclick="semDel('trabalhos','${t.id}').then(carregarTrabalhos)">✕</span></h4>
+        <p><span class="sem-tag">${t.disc||''}</span> <span class="sem-tag ${cor[t.status]||''}">${t.status||''}</span></p>
+        ${t.entrega ? `<p style="font-size:.7rem;opacity:.4;margin-top:.35rem">Entrega: ${t.entrega}</p>` : ''}
+      </div>`).join('')}</div>`;
+  }
+  async function adicionarTrabalho() {
+    const titulo = document.getElementById('trab-titulo').value.trim();
+    if (!titulo) return;
+    await semAdd('trabalhos', { titulo, disc: document.getElementById('trab-disc').value, entrega: document.getElementById('trab-entrega').value, status: document.getElementById('trab-status').value });
+    ['trab-titulo','trab-disc','trab-entrega'].forEach(id => document.getElementById(id).value = '');
+    carregarTrabalhos();
+  }
+
+  /* finanças */
+  async function carregarFinancas() {
+    const items = await semGet('financas');
+    let ent = 0, sai = 0;
+    items.forEach(f => { if (f.tipo === 'entrada') ent += Number(f.valor||0); else sai += Number(f.valor||0); });
+    const saldo = ent - sai;
+    document.getElementById('fin-entradas').textContent = fmt(ent);
+    document.getElementById('fin-saidas').textContent   = fmt(sai);
+    document.getElementById('fin-saldo').textContent    = fmt(saldo);
+    document.getElementById('fin-saldo').style.color    = saldo >= 0 ? 'var(--ouro-lt)' : '#E08090';
+    const cfg = await semGetDoc('financas');
+    if (cfg.meta) {
+      document.getElementById('fin-meta').value = cfg.meta;
+      document.getElementById('fin-progress').style.width = Math.min(100, Math.round(ent / cfg.meta * 100)) + '%';
+    }
+    document.getElementById('fin-historico').innerHTML = items.length
+      ? `<div>${items.slice(-8).reverse().map(f => `
+          <div class="sem-lembrete-item">
+            <span class="sem-lembrete-dot ${f.tipo==='entrada'?'ok':'urgente'}"></span>
+            <span style="font-size:.78rem;color:rgba(237,229,206,0.6);flex:1">${f.desc||f.tipo}</span>
+            <span style="font-size:.75rem;color:${f.tipo==='entrada'?'var(--oliva-lt)':'#E08090'};font-family:'DM Mono',monospace">${f.tipo==='entrada'?'+':'-'}${fmt(f.valor)}</span>
+            <span style="cursor:pointer;opacity:.3;font-size:.68rem;margin-left:.4rem" onclick="semDel('financas','${f.id}').then(carregarFinancas)">✕</span>
+          </div>`).join('')}</div>` : '';
+  }
+  async function adicionarFinanca(tipo) {
+    const val = document.getElementById('fin-'+tipo+'-val').value;
+    const desc = document.getElementById('fin-'+tipo+'-desc').value;
+    if (!val) return;
+    await semAdd('financas', { tipo, valor: val, desc });
+    document.getElementById('fin-'+tipo+'-val').value  = '';
+    document.getElementById('fin-'+tipo+'-desc').value = '';
+    carregarFinancas();
+  }
+  async function salvarMeta() {
+    const v = document.getElementById('fin-meta').value;
+    if (v) await semSet('financas', { meta: Number(v) });
+    carregarFinancas();
+  }
+
+  /* carreira */
+  async function carregarCarreira() {
+    const cfg = await semGetDoc('carreira');
+    if (cfg.plano) document.getElementById('carr-plano').value = cfg.plano;
+    const conc = await semGet('concursos');
+    document.getElementById('lista-concursos').innerHTML = conc.map(c => `
+      <div class="sem-lembrete-item">
+        <span class="sem-lembrete-dot"></span>
+        <span style="font-size:.8rem;color:rgba(237,229,206,0.65);flex:1">${c.nome||''} ${c.data?'· '+c.data:''}</span>
+        <span class="sem-tag">${c.status||''}</span>
+        <span style="cursor:pointer;opacity:.3;font-size:.68rem;margin-left:.35rem" onclick="semDel('concursos','${c.id}').then(carregarCarreira)">✕</span>
+      </div>`).join('') || '<p style="color:rgba(237,229,206,0.25);font-size:.78rem">Nenhum concurso.</p>';
+    const ev = await semGet('eventos_carr');
+    document.getElementById('lista-eventos-carr').innerHTML = ev.map(e => `
+      <div class="sem-lembrete-item">
+        <span class="sem-lembrete-dot ok"></span>
+        <span style="font-size:.8rem;color:rgba(237,229,206,0.65);flex:1">${e.nome||''}</span>
+        <span style="font-size:.7rem;opacity:.35">${e.data||''}</span>
+        <span style="cursor:pointer;opacity:.3;font-size:.68rem;margin-left:.35rem" onclick="semDel('eventos_carr','${e.id}').then(carregarCarreira)">✕</span>
+      </div>`).join('') || '<p style="color:rgba(237,229,206,0.25);font-size:.78rem">Nenhum evento.</p>';
+  }
+  async function salvarCarreira() {
+    await semSet('carreira', { plano: document.getElementById('carr-plano').value });
+    setStatus('status-perfil', ''); /* reutiliza nenhum status dedicado — silencioso */
+  }
+  async function adicionarConcurso() {
+    const nome = document.getElementById('conc-nome').value.trim();
+    if (!nome) return;
+    await semAdd('concursos', { nome, data: document.getElementById('conc-data').value, status: document.getElementById('conc-status').value });
+    ['conc-nome','conc-data','conc-status'].forEach(id => document.getElementById(id).value = '');
+    carregarCarreira();
+  }
+  async function adicionarEventoCarr() {
+    const nome = document.getElementById('ev-nome').value.trim();
+    if (!nome) return;
+    await semAdd('eventos_carr', { nome, data: document.getElementById('ev-data').value });
+    ['ev-nome','ev-data'].forEach(id => document.getElementById(id).value = '');
+    carregarCarreira();
+  }
+
+  /* estágio */
+  async function carregarEstagio() {
+    const cfg = await semGetDoc('estagio');
+    ['local','area','horario','bolsa'].forEach(k => { if (cfg[k]) document.getElementById('est-'+k).value = cfg[k]; });
+    const dem = await semGet('demandas');
+    document.getElementById('lista-demandas').innerHTML = dem.map(d => `
+      <div class="sem-lembrete-item">
+        <span class="sem-lembrete-dot ${d.prazo && new Date(d.prazo) < new Date() ? 'urgente' : ''}"></span>
+        <span style="font-size:.8rem;color:rgba(237,229,206,0.65);flex:1">${d.titulo||''}</span>
+        ${d.prazo ? `<span style="font-size:.68rem;opacity:.35">${d.prazo}</span>` : ''}
+        <span style="cursor:pointer;opacity:.3;font-size:.68rem;margin-left:.35rem" onclick="semDel('demandas','${d.id}').then(carregarEstagio)">✕</span>
+      </div>`).join('') || '<p style="color:rgba(237,229,206,0.25);font-size:.78rem">Nenhuma demanda.</p>';
+    const proc = await semGet('processos');
+    document.getElementById('lista-processos').innerHTML = proc.map(p => `
+      <div class="sem-lembrete-item">
+        <span class="sem-lembrete-dot ok"></span>
+        <span style="font-size:.8rem;color:rgba(237,229,206,0.65);flex:1">${p.num||''}</span>
+        <span style="font-size:.7rem;opacity:.35;max-width:12ch;text-align:right;overflow:hidden">${p.desc||''}</span>
+        <span style="cursor:pointer;opacity:.3;font-size:.68rem;margin-left:.35rem" onclick="semDel('processos','${p.id}').then(carregarEstagio)">✕</span>
+      </div>`).join('') || '<p style="color:rgba(237,229,206,0.25);font-size:.78rem">Nenhum processo.</p>';
+  }
+  async function salvarEstagio() {
+    await semSet('estagio', { local: document.getElementById('est-local').value, area: document.getElementById('est-area').value, horario: document.getElementById('est-horario').value, bolsa: document.getElementById('est-bolsa').value });
+  }
+  async function adicionarDemanda() {
+    const titulo = document.getElementById('dem-titulo').value.trim();
+    if (!titulo) return;
+    await semAdd('demandas', { titulo, prazo: document.getElementById('dem-prazo').value });
+    ['dem-titulo','dem-prazo'].forEach(id => document.getElementById(id).value = '');
+    carregarEstagio();
+  }
+  async function adicionarProcesso() {
+    const num = document.getElementById('proc-num').value.trim();
+    if (!num) return;
+    await semAdd('processos', { num, desc: document.getElementById('proc-desc').value });
+    ['proc-num','proc-desc'].forEach(id => document.getElementById(id).value = '');
+    carregarEstagio();
+  }
+
+  /* lembretes */
+  async function carregarLembretes() {
+    const items = await semGet('lembretes');
+    const c = document.getElementById('lista-lembretes');
+    if (!items.length) { c.innerHTML = '<p style="color:rgba(237,229,206,0.3);font-size:.8rem">Nenhum lembrete ainda.</p>'; return; }
+    c.innerHTML = items.sort((a,b) => (a.data||'') < (b.data||'') ? -1 : 1).map(l => `
+      <div class="sem-lembrete-item">
+        <span class="sem-lembrete-dot ${l.tipo||''}"></span>
+        <span style="font-size:.82rem;color:rgba(237,229,206,0.7);flex:1">${l.texto||''}</span>
+        ${l.data ? `<span style="font-size:.68rem;opacity:.4;font-family:'DM Mono',monospace">${l.data}</span>` : ''}
+        <span style="cursor:pointer;opacity:.3;font-size:.72rem;margin-left:.45rem" onclick="semDel('lembretes','${l.id}').then(carregarLembretes)">✕</span>
+      </div>`).join('');
+  }
+  async function adicionarLembrete() {
+    const texto = document.getElementById('lem-texto').value.trim();
+    if (!texto) return;
+    await semAdd('lembretes', { texto, data: document.getElementById('lem-data').value, tipo: document.getElementById('lem-tipo').value });
+    ['lem-texto','lem-data'].forEach(id => document.getElementById(id).value = '');
+    carregarLembretes();
+  }
+
+  function inicializarSemestre() {
+    carregarSemestre();
+    carregarDisciplinas();
+    carregarTrabalhos();
+    carregarFinancas();
+    carregarCarreira();
+    carregarEstagio();
+    carregarLembretes();
   }
 </script>
 </body>
