@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfólio — Renata Oliveira</title>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+
+  <!-- Three.js + loaders via importmap -->
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  }
+  </script>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bordo:     #7A1A30;
+      --bordo-dk:  #530F20;
+      --oliva:     #4E5C1E;
+      --oliva-lt:  #748929;
+      --ouro:      #C89012;
+      --ouro-lt:   #E8B820;
+      --creme:     #EDE5CE;
+      --creme-dk:  #C8BEA0;
+      --tinta:     #18100A;
+      --terra:     #8B4513;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      background: var(--creme);
+      color: var(--tinta);
+      overflow-x: hidden;
+    }
+
+    /* ── HEADER 3D ── */
+    #header-3d {
+      position: relative;
+      width: 100%;
+      height: 88vh;
+      min-height: 520px;
+      overflow: hidden;
+    }
+    #three-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    /* Fade para o conteúdo */
+    #header-3d::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 140px;
+      background: linear-gradient(to bottom, transparent, var(--creme));
+      pointer-events: none;
+      z-index: 4;
+    }
+
+    /* ── NAV FLUTUANTE ── */
+    #nav-top {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 10;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.1rem 2.2rem;
+      background: rgba(24, 16, 10, 0.5);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(232,184,32,0.12);
+    }
+    .nav-brand {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-style: italic;
+      font-size: 1rem;
+      color: var(--creme);
+      opacity: 0.9;
+      letter-spacing: 0.02em;
+    }
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+    .nav-links a {
+      font-family: 'Syne', system-ui, sans-serif;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--creme-dk);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--ouro-lt); }
+
+    /* ── LOADING OVERLAY ── */
+    #loading-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #0e0905;
+      transition: opacity 0.8s ease;
+    }
+    #loading-overlay.hidden { opacity: 0; pointer-events: none; }
+    .loading-name {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(2.8rem, 8vw, 6rem);
+      font-weight: 900;
+      color: var(--creme);
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+    .loading-name em { font-style: italic; color: var(--ouro-lt); }
+    .loading-bar-wrap {
+      margin-top: 1.8rem;
+      width: 200px;
+      height: 2px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .loading-bar {
+      height: 100%;
+      width: 0%;
+      background: var(--ouro-lt);
+      transition: width 0.3s ease;
+    }
+    .loading-label {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--creme);
+      opacity: 0.4;
+      margin-top: 0.75rem;
+    }
+
+    /* ── BADGE CANTO ── */
+    #corner-badge {
+      position: absolute;
+      bottom: 5rem;
+      left: 2.2rem;
+      z-index: 5;
+    }
+    .badge-eyebrow {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.58rem;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--ouro-lt);
+      display: block;
+      margin-bottom: 0.4rem;
+      opacity: 0.85;
+    }
+    .badge-bio {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-size: 0.88rem;
+      font-weight: 300;
+      color: var(--creme);
+      opacity: 0.7;
+      border-left: 2px solid var(--ouro);
+      padding-left: 0.8rem;
+      line-height: 1.55;
+      max-width: 26ch;
+    }
+
+    /* ── SEÇÃO WRAPPER ── */
+    .sec-wrapper {
+      max-width: 940px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* ── NAV SECUNDÁRIA ── */
+    #main-nav {
+      background: var(--tinta);
+      padding: 0;
+      border-bottom: 1px solid rgba(200,144,18,0.18);
+    }
+    #main-nav .sec-wrapper {
+      display: flex;
+      gap: 0;
+    }
+    #main-nav a {
+      font-family: 'Syne', system-ui, sans-serif;
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--creme-dk);
+      text-decoration: none;
+      padding: 0.85rem 1.5rem 0.85rem 0;
+      display: block;
+      transition: color 0.2s;
+      border-right: 1px solid rgba(255,255,255,0.06);
+    }
+    #main-nav a:first-child { padding-left: 0; }
+    #main-nav a:hover { color: var(--ouro-lt); }
+
+    /* ── MOTIVO LAVATER (SVG inline) ── */
+    .sec-motivo {
+      padding: 3.5rem 0 1rem;
+    }
+    .motivo-svg {
+      display: block;
+      margin: 0 auto 2.2rem;
+    }
+    .sec-title {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: clamp(1.6rem, 3vw, 2.2rem);
+      font-weight: 700;
+      color: var(--bordo);
+      letter-spacing: -0.01em;
+      margin-bottom: 1.5rem;
+      line-height: 1.1;
+    }
+
+    /* ── PROJETOS ── */
+    #sec-projetos { padding-bottom: 3.5rem; }
+    #lista-projetos {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+      gap: 1rem;
+    }
+    .card-projeto {
+      background: #fff;
+      border: 1px solid #e0d9c8;
+      border-radius: 3px;
+      padding: 1.4rem;
+      border-top: 3px solid var(--bordo);
+      transition: transform 0.18s, box-shadow 0.18s;
+    }
+    .card-projeto:hover { transform: translateY(-2px); box-shadow: 0 4px 18px rgba(0,0,0,0.08); }
+    .card-projeto h3 {
+      font-family: 'Syne', system-ui, sans-serif;
+      font-size: 0.92rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+    .card-projeto p { font-size: 0.85rem; color: #555; margin-bottom: 0.75rem; line-height: 1.55; }
+    .tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 0.8rem; }
+    .tag {
+      background: #f3ede0;
+      color: var(--bordo);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      padding: 0.18rem 0.5rem;
+      border-radius: 2px;
+    }
+    .card-projeto a {
+      font-family: 'Syne', system-ui, sans-serif;
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--oliva);
+      text-decoration: none;
+    }
+    .card-projeto a:hover { color: var(--bordo); }
+
+    /* ── NOTAS ── */
+    #sec-notas { padding-bottom: 3.5rem; border-top: 1px solid #e0d9c8; }
+    #container-notas {
+      background: #fff;
+      border: 1px solid #e0d9c8;
+      border-radius: 3px;
+      padding: 2rem;
+      border-left: 4px solid var(--ouro);
+      line-height: 1.7;
+    }
+    #container-notas h2 {
+      font-family: 'Playfair Display', Georgia, serif;
+      font-size: 1.2rem;
+      color: var(--bordo);
+      margin-bottom: 0.75rem;
+    }
+    #container-notas p { margin-bottom: 0.75rem; }
+    #container-notas ul, #container-notas ol { margin: 0.75rem 0 0.75rem 1.5rem; }
+    #container-notas li { margin-bottom: 0.3rem; }
+
+    .loading-text { color: #aaa; font-style: italic; font-size: 0.88rem; }
+
+    footer {
+      text-align: center;
+      padding: 2.5rem;
+      color: #aaa;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      border-top: 1px solid #eae4d5;
+      margin-top: 2rem;
+    }
+
+    @media (max-width: 600px) {
+      #nav-top { padding: 0.9rem 1.1rem; }
+      .nav-links { gap: 1.2rem; }
+      #corner-badge { left: 1.1rem; bottom: 4.5rem; }
+      #header-3d { height: 65vh; min-height: 400px; }
+      .sec-motivo { padding: 2.5rem 0 0.5rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ HEADER 3D ═══════════════════════════ -->
+<header id="header-3d">
+  <canvas id="three-canvas"></canvas>
+
+  <!-- Loading screen -->
+  <div id="loading-overlay">
+    <p class="loading-name">Re<em>nata</em></p>
+    <div class="loading-bar-wrap"><div class="loading-bar" id="loading-bar"></div></div>
+    <p class="loading-label">carregando cena</p>
+  </div>
+
+  <!-- Nav flutuante -->
+  <nav id="nav-top">
+    <span class="nav-brand">Renata Oliveira</span>
+    <ul class="nav-links">
+      <a href="#sec-projetos">Projetos</a>
+      <a href="#sec-notas">Notas</a>
+      <a id="nav-linkedin" href="#" target="_blank" rel="noopener" style="display:none">LinkedIn</a>
+    </ul>
+  </nav>
+
+  <!-- Badge bio -->
+  <div id="corner-badge">
+    <span class="badge-eyebrow">Portfólio</span>
+    <p class="badge-bio" id="bio-badge">Designer &amp; Desenvolvedora</p>
+  </div>
+</header>
+
+<!-- ═══ NAV PRINCIPAL ════════════════════════ -->
+<nav id="main-nav">
+  <div class="sec-wrapper">
+    <a href="#sec-projetos">Projetos</a>
+    <a href="#sec-notas">Notas</a>
+  </div>
+</nav>
+
+<!-- ═══ CONTEÚDO ════════════════════════════ -->
+<main>
+
+  <!-- PROJETOS — motivo: círculos Venn (interseção, colaboração) -->
+  <section id="sec-projetos">
+    <div class="sec-motivo sec-wrapper">
+      <svg class="motivo-svg" width="72" height="40" viewBox="0 0 72 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="24" cy="20" r="18" fill="none" stroke="#7A1A30" stroke-width="1.5" opacity="0.5"/>
+        <circle cx="48" cy="20" r="18" fill="none" stroke="#4E5C1E" stroke-width="1.5" opacity="0.5"/>
+        <ellipse cx="36" cy="20" rx="6" ry="12" fill="#C89012" opacity="0.18"/>
+        <circle cx="36" cy="20" r="2.5" fill="#C89012" opacity="0.7"/>
+      </svg>
+      <h2 class="sec-title">Projetos</h2>
+    </div>
+    <div class="sec-wrapper">
+      <div id="lista-projetos"><p class="loading-text">Carregando projetos…</p></div>
+    </div>
+  </section>
+
+  <!-- NOTAS — motivo: espiral de pontos (acumulação, aprendizado) -->
+  <section id="sec-notas">
+    <div class="sec-motivo sec-wrapper">
+      <svg class="motivo-svg" width="72" height="72" viewBox="0 0 72 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <!-- espiral de círculos em crescendo -->
+        <circle cx="36" cy="36" r="2"   fill="#7A1A30" opacity="0.9"/>
+        <circle cx="36" cy="28" r="2.2" fill="#7A1A30" opacity="0.75"/>
+        <circle cx="43" cy="25" r="2.5" fill="#C89012" opacity="0.7"/>
+        <circle cx="50" cy="30" r="2.8" fill="#4E5C1E" opacity="0.65"/>
+        <circle cx="50" cy="39" r="3"   fill="#7A1A30" opacity="0.55"/>
+        <circle cx="43" cy="47" r="3.2" fill="#C89012" opacity="0.5"/>
+        <circle cx="33" cy="49" r="3.5" fill="#4E5C1E" opacity="0.45"/>
+        <circle cx="24" cy="44" r="3.8" fill="#7A1A30" opacity="0.35"/>
+        <circle cx="21" cy="34" r="4"   fill="#C89012" opacity="0.25"/>
+      </svg>
+      <h2 class="sec-title">Notas de Estudo</h2>
+    </div>
+    <div class="sec-wrapper">
+      <div id="container-notas"><p class="loading-text">Carregando notas…</p></div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>Portfólio de Renata Oliveira Nascimento &nbsp;·&nbsp; feito com frequência</p>
+</footer>
+
+
+<!-- ═══ THREE.JS — CENA 3D ══════════════════ -->
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+
+
+// ── Setup ───────────────────────────────────
+const canvas   = document.getElementById('three-canvas');
+const overlay  = document.getElementById('loading-overlay');
+const loadBar  = document.getElementById('loading-bar');
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type    = THREE.PCFSoftShadowMap;
+renderer.toneMapping       = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+
+const scene  = new THREE.Scene();
+// Gradiente de céu — sunset sertanejo
+scene.background = new THREE.Color('#3d1a0a');
+scene.fog = new THREE.FogExp2('#3d1a0a', 0.048);
+
+const camera = new THREE.PerspectiveCamera(52, canvas.offsetWidth / canvas.offsetHeight, 0.1, 80);
+camera.position.set(-1.5, 3.2, 10.5);
+camera.lookAt(0.5, 1.0, 0);
+
+// ── Iluminação ──────────────────────────────
+// Sol baixo — dourado-alaranjado
+const sun = new THREE.DirectionalLight('#ffb347', 2.6);
+sun.position.set(8, 5, 4);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 0.5;
+sun.shadow.camera.far  = 40;
+sun.shadow.camera.left = sun.shadow.camera.bottom = -12;
+sun.shadow.camera.right = sun.shadow.camera.top   =  12;
+sun.shadow.bias = -0.0003;
+scene.add(sun);
+
+// Luz de preenchimento — azul-roxo do céu oposto
+const fill = new THREE.DirectionalLight('#4466aa', 0.4);
+fill.position.set(-6, 4, -3);
+scene.add(fill);
+
+// Ambient suave
+const ambient = new THREE.AmbientLight('#6b3a1a', 0.55);
+scene.add(ambient);
+
+// ── Chão — terra avermelhada ────────────────
+const floorGeo = new THREE.PlaneGeometry(80, 80, 40, 40);
+// Deslocar vértices levemente para textura orgânica
+const pos = floorGeo.attributes.position;
+for (let i = 0; i < pos.count; i++) {
+  if (pos.getZ(i) !== 0) continue; // plano está em XZ após rotate
+}
+const floorMat = new THREE.MeshStandardMaterial({
+  color: '#7a3a18',
+  roughness: 0.97,
+  metalness: 0.0,
+});
+const floor = new THREE.Mesh(floorGeo, floorMat);
+floor.rotation.x = -Math.PI / 2;
+floor.receiveShadow = true;
+scene.add(floor);
+
+// Disco de areia mais claro ao redor do buggy
+const sandGeo = new THREE.CircleGeometry(5, 32);
+const sandMat = new THREE.MeshStandardMaterial({ color: '#b06030', roughness: 0.99 });
+const sand = new THREE.Mesh(sandGeo, sandMat);
+sand.rotation.x = -Math.PI / 2;
+sand.position.y = 0.01;
+sand.receiveShadow = true;
+scene.add(sand);
+
+// Pedras decorativas
+function addRock(x, z, s) {
+  const g = new THREE.DodecahedronGeometry(s, 0);
+  const m = new THREE.MeshStandardMaterial({ color: '#5a3520', roughness: 0.95 });
+  const mesh = new THREE.Mesh(g, m);
+  mesh.position.set(x, s * 0.5, z);
+  mesh.rotation.set(Math.random(), Math.random(), Math.random());
+  mesh.castShadow = mesh.receiveShadow = true;
+  scene.add(mesh);
+}
+[[3.5, -1.5, 0.18],[4.2, 0.8, 0.12],[-4, -2, 0.22],[-3.2, 1.2, 0.14],[5, 2.5, 0.1]].forEach(([x,z,s]) => addRock(x,z,s));
+
+// ── Partículas de poeira ────────────────────
+const dustCount = 220;
+const dustPos   = new Float32Array(dustCount * 3);
+for (let i = 0; i < dustCount; i++) {
+  dustPos[i*3]   = (Math.random() - 0.5) * 18;
+  dustPos[i*3+1] = Math.random() * 5 + 0.2;
+  dustPos[i*3+2] = (Math.random() - 0.5) * 12;
+}
+const dustGeo = new THREE.BufferGeometry();
+dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+const dustMat = new THREE.PointsMaterial({ color: '#ffaa44', size: 0.04, transparent: true, opacity: 0.4, sizeAttenuation: true });
+scene.add(new THREE.Points(dustGeo, dustMat));
+
+// ── Loader GLB ──────────────────────────────
+const loader = new GLTFLoader();
+// Draco opcional (sem worker — GitHub Pages pode servir o arquivo)
+// Não usamos Draco aqui pois os GLBs podem não estar comprimidos com ele
+
+let loadedCount = 0;
+const totalModels = 3;
+function onProgress() {
+  loadedCount++;
+  loadBar.style.width = (loadedCount / totalModels * 100) + '%';
+  if (loadedCount >= totalModels) {
+    setTimeout(() => { overlay.classList.add('hidden'); }, 400);
+  }
+}
+
+// ── BUGGY ────────────────────────────────────
+loader.load('models/Buggy.glb', (gltf) => {
+  const buggy = gltf.scene;
+  
+  // Calcular bounding box para escala
+  const bbox = new THREE.Box3().setFromObject(buggy);
+  const size = new THREE.Vector3();
+  bbox.getSize(size);
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const targetSize = 3.0; // queremos ~3 unidades de largura
+  const scale = targetSize / maxDim;
+  
+  buggy.scale.setScalar(scale);
+  
+  // Reposicionar no chão
+  const bbox2 = new THREE.Box3().setFromObject(buggy);
+  const minY  = bbox2.min.y;
+  buggy.position.set(0.8, -minY + 0.02, 1.2);
+  buggy.rotation.y = -0.25; // ângulo ligeiramente virado para câmera
+  
+  buggy.traverse(child => {
+    if (child.isMesh) {
+      child.castShadow    = true;
+      child.receiveShadow = true;
+    }
+  });
+  
+  scene.add(buggy);
+  scene.userData.buggy = buggy;
+  onProgress();
+}, null, (err) => { console.error('Buggy:', err); onProgress(); });
+
+// ── CACTUS (3 instâncias) ────────────────────
+loader.load('models/Cactus.glb', (gltf) => {
+  const positions = [
+    [-4.2, 0, -1.5, 0.9,  0.2],
+    [ 4.8, 0,  0.5, 1.1, -0.1],
+    [-5.5, 0,  1.0, 0.75, 0.5],
+    [ 3.0, 0, -3.0, 0.85,  0],
+  ];
+  
+  positions.forEach(([x, y, z, sc, ry]) => {
+    const clone = gltf.scene.clone(true);
+    const bbox  = new THREE.Box3().setFromObject(clone);
+    const bsize = new THREE.Vector3();
+    bbox.getSize(bsize);
+    const maxDim = Math.max(bsize.x, bsize.y, bsize.z);
+    const targetH = 1.8 * sc;
+    const s = targetH / maxDim;
+    clone.scale.setScalar(s);
+    const bbox2 = new THREE.Box3().setFromObject(clone);
+    clone.position.set(x, -bbox2.min.y + 0.01, z);
+    clone.rotation.y = ry + Math.random() * 0.4;
+    clone.traverse(c => {
+      if (c.isMesh) {
+        // Garantir material verde se vier cinza
+        if (c.material && c.material.color) {
+          const col = c.material.color;
+          const lum = col.r * 0.299 + col.g * 0.587 + col.b * 0.114;
+          // Se for muito neutro, force verde-cactus
+          if (Math.abs(col.r - col.g) < 0.05 && Math.abs(col.g - col.b) < 0.05) {
+            c.material = c.material.clone();
+            c.material.color.set('#4a7a2a');
+          }
+        }
+        c.castShadow = c.receiveShadow = true;
+      }
+    });
+    scene.add(clone);
+  });
+  onProgress();
+}, null, (err) => { console.error('Cactus:', err); onProgress(); });
+
+// ── DESERT MARIGOLD (2 instâncias) ──────────
+loader.load('models/Desert_marigold.glb', (gltf) => {
+  const positions = [
+    [-2.5, 0, -0.8, 0.28],
+    [ 3.5, 0, -2.0, 0.32],
+    [-1.5, 0,  2.5, 0.24],
+  ];
+  
+  positions.forEach(([x, y, z, sc]) => {
+    const clone = gltf.scene.clone(true);
+    const bbox  = new THREE.Box3().setFromObject(clone);
+    const bsize = new THREE.Vector3();
+    bbox.getSize(bsize);
+    const maxDim = Math.max(bsize.x, bsize.z); // usar X/Z, ignorar altura pois a planta é alta
+    const targetW = 1.4 * sc;
+    const s = targetW / maxDim;
+    clone.scale.setScalar(s);
+    const bbox2 = new THREE.Box3().setFromObject(clone);
+    clone.position.set(x, -bbox2.min.y + 0.01, z);
+    clone.rotation.y = Math.random() * Math.PI * 2;
+    clone.traverse(c => { if (c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
+    scene.add(clone);
+  });
+  onProgress();
+}, null, (err) => { console.error('Marigold:', err); onProgress(); });
+
+// ── NOME "RENATA" — sprite 2D sobre a cena ──
+// Usamos canvas texture para evitar depender de TextGeometry + font JSON
+function makeNameTexture(text) {
+  const cvs = document.createElement('canvas');
+  cvs.width  = 1024;
+  cvs.height = 256;
+  const ctx = cvs.getContext('2d');
+  
+  // Fundo transparente
+  ctx.clearRect(0, 0, 1024, 256);
+  
+  // Sombra suave
+  ctx.shadowColor   = 'rgba(0,0,0,0.55)';
+  ctx.shadowBlur    = 18;
+  ctx.shadowOffsetX = 3;
+  ctx.shadowOffsetY = 3;
+  
+  // Texto principal
+  ctx.font         = 'bold 148px "Playfair Display", Georgia, serif';
+  ctx.fillStyle    = '#E8B820';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(text, 512, 128);
+  
+  // Linha decorativa
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(200,144,18,0.5)';
+  ctx.lineWidth   = 2;
+  const tw = ctx.measureText(text).width;
+  ctx.beginPath();
+  ctx.moveTo(512 - tw/2, 192);
+  ctx.lineTo(512 + tw/2, 192);
+  ctx.stroke();
+  
+  const tex = new THREE.CanvasTexture(cvs);
+  return tex;
+}
+
+const nameTex  = makeNameTexture('RENATA');
+const namePlane = new THREE.Mesh(
+  new THREE.PlaneGeometry(7, 1.75),
+  new THREE.MeshBasicMaterial({ map: nameTex, transparent: true, depthWrite: false })
+);
+namePlane.position.set(-0.2, 4.4, -1.8);
+scene.add(namePlane);
+
+// ── RESIZE ──────────────────────────────────
+window.addEventListener('resize', () => {
+  const w = canvas.offsetWidth, h = canvas.offsetHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+});
+
+// ── ANIMAÇÃO ────────────────────────────────
+let t = 0;
+const clock = new THREE.Clock();
+
+function animate() {
+  requestAnimationFrame(animate);
+  t = clock.getElapsedTime();
+  
+  // Buggy — float suave
+  if (scene.userData.buggy) {
+    scene.userData.buggy.position.y = 0.02 + Math.sin(t * 0.9) * 0.06;
+    scene.userData.buggy.rotation.y = -0.25 + Math.sin(t * 0.4) * 0.03;
+  }
+  
+  // Nome — oscila suave
+  namePlane.position.y = 4.4 + Math.sin(t * 0.6 + 1) * 0.04;
+  
+  // Poeira
+  const dp = dustGeo.attributes.position.array;
+  for (let i = 0; i < dustCount; i++) {
+    dp[i*3+1] += 0.004 + Math.sin(t + i) * 0.002;
+    if (dp[i*3+1] > 5.5) dp[i*3+1] = 0.1;
+    dp[i*3] += Math.sin(t * 0.3 + i) * 0.001;
+  }
+  dustGeo.attributes.position.needsUpdate = true;
+  
+  // Câmera — drift suavíssimo
+  camera.position.x = -1.5 + Math.sin(t * 0.12) * 0.3;
+  camera.lookAt(0.5 + Math.sin(t * 0.08) * 0.1, 1.0, 0);
+  
+  renderer.render(scene, camera);
+}
+
+animate();
+</script>
+
+
+<!-- ═══ FIREBASE ════════════════════════════ -->
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyA-mizRLLIB3EvWxs6Xa6hTHaeSQj9jPaw",
+    authDomain: "renata-d1eba.firebaseapp.com",
+    projectId: "renata-d1eba",
+    storageBucket: "renata-d1eba.firebasestorage.app",
+    messagingSenderId: "873732794860",
+    appId: "1:873732794860:web:48e9abff4afb87e16f78c9"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  async function carregarPerfil() {
+    try {
+      const doc = await db.collection('configuracoes_publicas').doc('info_pessoal').get();
+      if (!doc.exists) return;
+      const d = doc.data();
+      if (d.bio_curta) document.getElementById('bio-badge').textContent = d.bio_curta;
+      if (d.linkedin_url) {
+        const link = document.getElementById('nav-linkedin');
+        link.href = d.linkedin_url;
+        link.style.display = 'inline';
+      }
+    } catch (err) { console.error(err); }
+  }
+
+  async function carregarProjetos() {
+    const container = document.getElementById('lista-projetos');
+    try {
+      const snapshot = await db.collection('projetos').get();
+      if (snapshot.empty) {
+        container.innerHTML = '<p class="loading-text">Nenhum projeto cadastrado ainda.</p>';
+        return;
+      }
+      container.innerHTML = '';
+      snapshot.forEach(doc => {
+        const p = doc.data();
+        const tags = (p.chips_tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+        const card = document.createElement('div');
+        card.className = 'card-projeto';
+        card.innerHTML = `
+          <h3>${p.titulo || ''}</h3>
+          <p>${p.descricao || ''}</p>
+          <div class="tags">${tags}</div>
+          ${p.url_projeto ? `<a href="${p.url_projeto}" target="_blank" rel="noopener">Ver projeto →</a>` : ''}
+        `;
+        container.appendChild(card);
+      });
+    } catch (err) {
+      container.innerHTML = '<p class="loading-text">Erro ao carregar projetos.</p>';
+      console.error(err);
+    }
+  }
+
+  async function carregarNotas() {
+    const container = document.getElementById('container-notas');
+    try {
+      const snapshot = await db.collection('notas_notion_like')
+        .orderBy('data_criacao', 'desc').limit(1).get();
+      if (snapshot.empty) {
+        container.innerHTML = '<p class="loading-text">Nenhuma nota ainda.</p>';
+        return;
+      }
+      const nota = snapshot.docs[0].data();
+      const json  = nota.conteudo;
+      if (!json || !json.blocks) { container.innerHTML = '<p class="loading-text">Nota sem conteúdo.</p>'; return; }
+      container.innerHTML = nota.titulo ? `<h2>${nota.titulo}</h2>` : '';
+      json.blocks.forEach(block => {
+        let el;
+        switch (block.type) {
+          case 'header':    el = document.createElement(`h${block.data.level || 2}`); el.innerHTML = block.data.text; break;
+          case 'paragraph': el = document.createElement('p'); el.innerHTML = block.data.text; break;
+          case 'list':
+            el = document.createElement(block.data.style === 'ordered' ? 'ol' : 'ul');
+            (block.data.items || []).forEach(item => { const li = document.createElement('li'); li.innerHTML = item; el.appendChild(li); }); break;
+          case 'image':
+            el = document.createElement('figure');
+            el.innerHTML = `<img src="${block.data.file?.url || ''}" alt="${block.data.caption || ''}" style="max-width:100%;border-radius:3px;" />${block.data.caption ? `<figcaption style="font-size:.8rem;color:#888;margin-top:.3rem">${block.data.caption}</figcaption>` : ''}`;
+            break;
+          case 'quote':
+            el = document.createElement('blockquote');
+            el.style.cssText = 'border-left:3px solid #C89012;padding-left:1rem;color:#555;margin:.75rem 0';
+            el.innerHTML = `<p>${block.data.text}</p>${block.data.caption ? `<cite>— ${block.data.caption}</cite>` : ''}`;
+            break;
+          case 'delimiter': el = document.createElement('hr'); el.style.margin = '1.5rem 0'; break;
+          default: return;
+        }
+        if (el) container.appendChild(el);
+      });
+    } catch (err) { container.innerHTML = '<p class="loading-text">Erro ao carregar notas.</p>'; console.error(err); }
+  }
+
+  carregarPerfil();
+  carregarProjetos();
+  carregarNotas();
+</script>
+</body>
+</html>
