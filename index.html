@@ -444,6 +444,98 @@
     }
     #lista-producoes .loading-text { color: rgba(24,16,10,0.35); }
 
+    /* ── FEED — tinta escura, tom terminal ── */
+    #sec-feed {
+      background: #0E0905;
+      padding-bottom: 0;
+      position: relative;
+      overflow: hidden;
+      border-top: 1px solid rgba(232,184,32,0.08);
+    }
+    #sec-feed .sec-title { color: var(--creme); font-style: italic; }
+    #sec-feed .sec-motivo { position: relative; z-index: 2; }
+    .feed-body-wrapper { position: relative; z-index: 2; padding-bottom: 4rem; }
+    .feed-filtros {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .4rem;
+      margin-bottom: 1.2rem;
+    }
+    .feed-chip {
+      font-family: 'DM Mono', monospace;
+      font-size: .6rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      padding: .25rem .65rem;
+      border: 1px solid rgba(232,184,32,0.25);
+      color: rgba(237,229,206,0.4);
+      cursor: pointer;
+      transition: all .15s;
+      background: none;
+    }
+    .feed-chip.ativo {
+      background: rgba(232,184,32,0.12);
+      color: var(--ouro-lt);
+      border-color: var(--ouro-lt);
+    }
+    #lista-feed { display: flex; flex-direction: column; gap: .5rem; }
+    .feed-item {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: .4rem 1rem;
+      align-items: start;
+      padding: .75rem 0;
+      border-bottom: 1px solid rgba(237,229,206,0.05);
+    }
+    .feed-item:last-child { border-bottom: none; }
+    .feed-score {
+      font-family: 'DM Mono', monospace;
+      font-size: .65rem;
+      color: var(--ouro-lt);
+      opacity: .7;
+      min-width: 2.5rem;
+      text-align: right;
+      padding-top: .1rem;
+    }
+    .feed-titulo {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-size: .88rem;
+      font-weight: 400;
+      color: rgba(237,229,206,0.8);
+      line-height: 1.4;
+      text-decoration: none;
+    }
+    .feed-titulo:hover { color: var(--ouro-lt); }
+    .feed-meta {
+      font-family: 'DM Mono', monospace;
+      font-size: .58rem;
+      color: rgba(237,229,206,0.25);
+      white-space: nowrap;
+      padding-top: .15rem;
+    }
+    .feed-tag {
+      font-family: 'DM Mono', monospace;
+      font-size: .55rem;
+      padding: .1rem .4rem;
+      background: rgba(122,26,48,0.35);
+      color: #E08090;
+      grid-column: 2;
+      display: inline-block;
+      width: fit-content;
+      margin-top: .2rem;
+    }
+    #feed-status {
+      font-family: 'DM Mono', monospace;
+      font-size: .7rem;
+      color: rgba(237,229,206,0.25);
+      padding: 1rem 0;
+    }
+
+    @media (max-width: 600px) {
+      .feed-item { grid-template-columns: 1fr; gap: .2rem; }
+      .feed-score { text-align: left; }
+      .feed-meta  { display: none; }
+    }
     footer {
       text-align: center;
       padding: 2.5rem;
@@ -554,6 +646,7 @@
       <a href="#sec-projetos">Projetos</a>
       <a href="#sec-producoes">Produções</a>
       <a href="#sec-notas">Notas</a>
+      <a href="#sec-feed">Feed</a>
       <a id="nav-linkedin" href="#" target="_blank" rel="noopener" style="display:none">LinkedIn</a>
       <a href="dashboard.html">Admin</a>
     </ul>
@@ -573,6 +666,7 @@
     <a href="#sec-projetos">Projetos</a>
     <a href="#sec-producoes">Produções</a>
     <a href="#sec-notas">Notas</a>
+    <a href="#sec-feed">Feed</a>
   </div>
 </nav>
 
@@ -708,7 +802,25 @@
     </div>
   </section>
 </main>
-
+<!-- FEED — Hacker News filtrado por área jurídica/criminológica -->
+  <section id="sec-feed">
+    <div class="sec-motivo sec-wrapper">
+      <span class="sec-label-txt">Feed · leituras em curso</span>
+      <h2 class="sec-title">O que está circulando</h2>
+    </div>
+    <div class="feed-body-wrapper sec-wrapper">
+      <div class="feed-filtros" id="feed-filtros">
+        <button class="feed-chip ativo" data-tag="todos" onclick="filtrarFeed('todos',this)">Todos</button>
+        <button class="feed-chip" data-tag="law"          onclick="filtrarFeed('law',this)">Lei</button>
+        <button class="feed-chip" data-tag="privacy"      onclick="filtrarFeed('privacy',this)">Privacidade</button>
+        <button class="feed-chip" data-tag="criminology"  onclick="filtrarFeed('criminology',this)">Criminologia</button>
+        <button class="feed-chip" data-tag="rights"       onclick="filtrarFeed('rights',this)">Direitos</button>
+        <button class="feed-chip" data-tag="ai"           onclick="filtrarFeed('ai',this)">IA</button>
+      </div>
+      <p id="feed-status">Carregando feed…</p>
+      <div id="lista-feed"></div>
+    </div>
+  </section>
 <footer>
   <p>Portfólio de Renata Oliveira Nascimento &nbsp;·&nbsp; feito com frequência</p>
   <a href="dashboard.html"
@@ -1183,6 +1295,97 @@ animate();
     } catch(e) { /* silencioso — só roda uma vez */ }
   })();
 
+  /* ══ FEED — Hacker News ══════════════════════════════════ */
+  const FEED_KEYWORDS = {
+    law:         ['law','legal','court','judge','crime','criminal','legislation','regulation','statute','rights','justice','attorney','lawyer','prosecution','defense','verdict','constitutional'],
+    privacy:     ['privacy','surveillance','data','gdpr','tracking','biometric','facial','recognition','spyware','encryption','breach','leak'],
+    criminology: ['criminology','criminological','penology','recidivism','incarceration','prison','policing','forensic','homicide','victimology','drug war','mass incarceration'],
+    rights:      ['human rights','civil rights','civil liberties','due process','habeas','discrimination','lgbtq','racial','indigenous','disability','refugee','asylum'],
+    ai:          ['artificial intelligence','machine learning','llm','gpt','algorithm','bias','deepfake','automation','ai regulation','facial recognition']
+  };
+
+  let _feedItens = [];
+  let _feedTagAtiva = 'todos';
+
+  function _tagDoItem(titulo) {
+    const t = titulo.toLowerCase();
+    for (const [tag, words] of Object.entries(FEED_KEYWORDS)) {
+      if (words.some(w => t.includes(w))) return tag;
+    }
+    return null;
+  }
+
+  async function carregarFeed() {
+    const status = document.getElementById('feed-status');
+    try {
+      // Busca top 200 IDs do HN
+      const ids = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json')
+        .then(r => r.json());
+
+      // Busca os primeiros 80 em paralelo
+      const slice = ids.slice(0, 80);
+      const itens = await Promise.all(
+        slice.map(id =>
+          fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`)
+            .then(r => r.json())
+            .catch(() => null)
+        )
+      );
+
+      // Filtra por keywords e normaliza
+      _feedItens = itens
+        .filter(i => i && i.title && i.url)
+        .map(i => ({ ...i, _tag: _tagDoItem(i.title) }))
+        .filter(i => i._tag !== null)
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 30);
+
+      status.textContent = '';
+      renderizarFeed();
+    } catch(e) {
+      status.textContent = 'Feed indisponível no momento.';
+    }
+  }
+
+  function renderizarFeed() {
+    const c = document.getElementById('lista-feed');
+    const visiveis = _feedTagAtiva === 'todos'
+      ? _feedItens
+      : _feedItens.filter(i => i._tag === _feedTagAtiva);
+
+    if (!visiveis.length) {
+      c.innerHTML = '<p style="color:rgba(237,229,206,0.25);font-size:.82rem">Nenhum resultado para esse filtro.</p>';
+      return;
+    }
+
+    const nomes = { law:'lei', privacy:'privacidade', criminology:'criminologia', rights:'direitos', ai:'ia' };
+    const ago = ts => {
+      const h = Math.floor((Date.now()/1000 - ts) / 3600);
+      return h < 1 ? 'agora' : h < 24 ? `${h}h atrás` : `${Math.floor(h/24)}d atrás`;
+    };
+
+    c.innerHTML = visiveis.map(i => `
+      <div class="feed-item">
+        <span class="feed-score">${i.score}</span>
+        <div>
+          <a class="feed-titulo" href="${i.url}" target="_blank" rel="noopener">${i.title}</a>
+          <span class="feed-tag">${nomes[i._tag]||i._tag}</span>
+        </div>
+        <span class="feed-meta">${ago(i.time)}</span>
+      </div>`).join('');
+  }
+
+  function filtrarFeed(tag, btn) {
+    _feedTagAtiva = tag;
+    document.querySelectorAll('.feed-chip').forEach(b => b.classList.remove('ativo'));
+    btn.classList.add('ativo');
+    renderizarFeed();
+  }
+
+  carregarFeed();
+
+  carregarPerfil();
+  carregarProjetos();
   carregarPerfil();
   carregarProjetos();
   carregarProducoes();
