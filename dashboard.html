@@ -12,6 +12,12 @@
 
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bordo: #7A1A30; --bordo-dk: #530F20;
+      --oliva: #4E5C1E; --oliva-dk: #323C12;
+      --ouro: #C89012;  --ouro-lt: #E8B820;
+      --creme: #EDE5CE; --tinta: #18100A;
+    }
     body { font-family: system-ui, sans-serif; background: #f0f2f5; color: #222; }
 
     /* Login */
@@ -32,9 +38,10 @@
 
     /* Dashboard */
     #dashboard { display: none; }
-    nav {
-      background: #1a1a2e; color: #fff; padding: .75rem 1.5rem;
+nav {
+      background: var(--bordo-dk); color: #fff; padding: .75rem 1.5rem;
       display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 2px solid var(--ouro);
     }
     nav h1 { font-size: 1.1rem; }
     nav button {
@@ -47,8 +54,7 @@
       padding: .75rem 1.5rem; cursor: pointer; font-size: .9rem;
       border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -2px;
     }
-    .aba.ativa { border-bottom-color: #1a1a2e; font-weight: 600; }
-
+.aba.ativa { border-bottom-color: var(--bordo); font-weight: 600; color: var(--bordo); }
     .painel { display: none; padding: 1.5rem; max-width: 900px; margin: 0 auto; }
     .painel.ativo { display: block; }
 
@@ -60,10 +66,12 @@
       border-radius: 4px; font-size: .95rem; font-family: inherit;
     }
     .campo textarea { resize: vertical; min-height: 80px; }
-    .btn-salvar {
-      background: #1a1a2e; color: #fff; border: none; padding: .65rem 1.4rem;
-      border-radius: 4px; cursor: pointer; font-size: .95rem;
+   .btn-salvar {
+      background: var(--bordo); color: var(--creme); border: none; padding: .65rem 1.4rem;
+      border-radius: 0; cursor: pointer; font-size: .95rem;
+      letter-spacing: 0.06em; font-weight: 600;
     }
+    .btn-salvar:hover { background: var(--bordo-dk); }
     .btn-perigo {
       background: #c00; color: #fff; border: none; padding: .4rem .85rem;
       border-radius: 4px; cursor: pointer; font-size: .8rem;
