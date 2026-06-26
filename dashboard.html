@@ -1305,7 +1305,10 @@
       setStatus('status-producao', '✓ Produção adicionada.');
       ['prod-titulo','prod-autores','prod-venue','prod-ano','prod-url'].forEach(id => document.getElementById(id).value = '');
       carregarProducoes();
-    } catch (err) { setStatus('status-producao', '✗ Erro.', 'err'); }
+    } catch (err) {
+      console.error('[producao]', err);
+      setStatus('status-producao', '✗ ' + (err.code || err.message), 'err');
+    }
   }
 
   async function excluirProducao(id) {
