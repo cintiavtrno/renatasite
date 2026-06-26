@@ -413,8 +413,6 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
-import { FontLoader } from 'three/addons/loaders/FontLoader.js';
-import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
 
 
 
@@ -627,49 +625,6 @@ loader.load('models/Desert_marigold.glb', (gltf) => {
   onProgress();
 }, null, (err) => { console.error('Marigold:', err); onProgress(); });
 
-// ── NOME "RENATA" — Texto 3D Real ──
-const fontLoader = new FontLoader();
-
-// Carregando uma fonte hospedada na nuvem para teste rápido
-fontLoader.load('https://unpkg.com/three@0.160.0/examples/fonts/helvetiker_bold.typeface.json', function (font) {
-  const textGeo = new TextGeometry('RENATA', {
-    font: font,
-    size: 1.2,          // Tamanho da letra
-    height: 0.3,        // Profundidade (A mágica do 3D acontece aqui)
-    curveSegments: 12,  // Qualidade das curvas
-    bevelEnabled: true, // Bordinha arredondada para pegar a luz
-    bevelThickness: 0.03,
-    bevelSize: 0.02,
-    bevelOffset: 0,
-    bevelSegments: 5
-  });
-
-  // Centralizar o objeto 3D perfeitamente
-  textGeo.computeBoundingBox();
-  const centerOffset = -0.5 * (textGeo.boundingBox.max.x - textGeo.boundingBox.min.x);
-
-  // Material que reage à luz (usando a sua cor Ouro-lt)
-  const textMat = new THREE.MeshStandardMaterial({ 
-    color: '#E8B820',
-    roughness: 0.3,     // Mais liso para dar um leve reflexo
-    metalness: 0.2
-  });
-
-  const textMesh = new THREE.Mesh(textGeo, textMat);
-  
-  // Posicionamento na cena
-  textMesh.position.set(centerOffset, 4.4, -1.8);
-  
-  // Habilitando sombras no texto
-  textMesh.castShadow = true;
-  textMesh.receiveShadow = true;
-
-  scene.add(textMesh);
-  
-  // Salvando referência para usar na animação abaixo
-  scene.userData.nameText = textMesh;
-});
-
 // ── RESIZE ──────────────────────────────────
 window.addEventListener('resize', () => {
   const w = canvas.offsetWidth, h = canvas.offsetHeight;
@@ -690,11 +645,6 @@ function animate() {
   if (scene.userData.buggy) {
     scene.userData.buggy.position.y = 0.02 + Math.sin(t * 0.9) * 0.06;
     scene.userData.buggy.rotation.y = -0.25 + Math.sin(t * 0.4) * 0.03;
-  }
-  
- // Nome — oscila suave (agora em 3D)
-  if (scene.userData.nameText) {
-    scene.userData.nameText.position.y = 4.4 + Math.sin(t * 0.6 + 1) * 0.04;
   }
   
   // Poeira
