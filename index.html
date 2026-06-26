@@ -240,6 +240,37 @@
       line-height: 1.1;
     }
 
+    /* ── SOBRE — tinta, motivo Vozes ── */
+    #sec-sobre {
+      background: var(--tinta);
+      padding-bottom: 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .sobre-geo {
+      position: absolute;
+      top: 50%; right: 3rem;
+      transform: translateY(-50%);
+      width: 260px; height: 260px;
+      opacity: 0.18;
+      pointer-events: none;
+      z-index: 0;
+    }
+    #sec-sobre .sec-motivo { position: relative; z-index: 2; }
+    #sec-sobre .sec-title  { color: var(--creme); font-style: italic; }
+    .sobre-body-wrapper { position: relative; z-index: 2; padding-bottom: 4rem; }
+    .sobre-texto {
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-size: 1.05rem;
+      font-weight: 300;
+      line-height: 1.9;
+      color: rgba(237,229,206,0.65);
+      max-width: 52ch;
+      border-left: 2px solid var(--ouro-lt);
+      padding-left: 1.2rem;
+    }
+    .sobre-texto strong { font-weight: 500; color: var(--ouro-lt); }
+
    /* ── PROJETOS — bordô como herói ── */
     #sec-projetos {
       background: var(--bordo);
@@ -387,8 +418,9 @@
   <nav id="nav-top">
     <span class="nav-brand">Renata Oliveira</span>
     <ul class="nav-links">
+      <a href="#sec-sobre">Sobre</a>
       <a href="#sec-projetos">Projetos</a>
-     <a href="#sec-notas">Notas</a>
+      <a href="#sec-notas">Notas</a>
       <a id="nav-linkedin" href="#" target="_blank" rel="noopener" style="display:none">LinkedIn</a>
       <a href="dashboard.html">Admin</a>
     </ul>
@@ -404,6 +436,7 @@
 <!-- ═══ NAV PRINCIPAL ════════════════════════ -->
 <nav id="main-nav">
   <div class="sec-wrapper">
+    <a href="#sec-sobre">Sobre</a>
     <a href="#sec-projetos">Projetos</a>
     <a href="#sec-notas">Notas</a>
   </div>
@@ -413,6 +446,63 @@
 <main>
 
   <!-- PROJETOS — bordô herói, grade Lavater em escala -->
+  <!-- SOBRE — tinta, motivo Vozes (rede de frequências) -->
+  <section id="sec-sobre">
+    <!-- Motivo Vozes: constelação hexagonal — as múltiplas frequências -->
+    <svg class="sobre-geo" viewBox="0 0 104 104" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <line x1="52" y1="52" x2="52" y2="18"  stroke="#EDE5CE" stroke-width="0.75" opacity="0.28"/>
+      <line x1="52" y1="52" x2="82" y2="34"  stroke="#EDE5CE" stroke-width="0.75" opacity="0.28"/>
+      <line x1="52" y1="52" x2="82" y2="70"  stroke="#EDE5CE" stroke-width="0.75" opacity="0.28"/>
+      <line x1="52" y1="52" x2="52" y2="86"  stroke="#EDE5CE" stroke-width="0.75" opacity="0.28"/>
+      <line x1="52" y1="52" x2="22" y2="70"  stroke="#EDE5CE" stroke-width="0.75" opacity="0.28"/>
+      <line x1="52" y1="52" x2="22" y2="34"  stroke="#EDE5CE" stroke-width="0.75" opacity="0.28"/>
+      <circle cx="52" cy="52" r="6"  fill="#EDE5CE"/>
+      <circle cx="52" cy="14" r="7"  fill="#7A1A30"/>
+      <circle cx="84" cy="32" r="6"  fill="#E8B820"/>
+      <circle cx="84" cy="72" r="8"  fill="#4E5C1E"/>
+      <circle cx="52" cy="90" r="6"  fill="#E8B820" opacity="0.5"/>
+      <circle cx="20" cy="72" r="5"  fill="#748929"/>
+      <circle cx="20" cy="32" r="6"  fill="#A33050"/>
+    </svg>
+    <div class="sec-motivo sec-wrapper">
+      <span class="sec-label-txt">Sobre · frequência</span>
+      <h2 class="sec-title">Renata Oliveira</h2>
+    </div>
+    <div class="sobre-body-wrapper sec-wrapper">
+      <p class="sobre-texto">
+        Uma pessoa que existe em <strong>múltiplas frequências simultâneas</strong> — a tensão da corda do violino, o eixo do pole, o acorde do violão, o peso dos Racionais que coexiste com Taylor Swift, o sertão (caatinga) entrando numa Salvador que nunca para. O conceito parte da física do som e do movimento: <strong>toda identidade vibra</strong>. A dela vibra em frequências que raramente aparecem juntas.
+      </p>
+    </div>
+  </section>
+<!-- SOBRE — tinta, motivo Vozes (rede de frequências) -->
+  <section id="sec-sobre">
+    <!-- Motivo Vozes: constelação hexagonal — as múltiplas frequências -->
+    <svg class="sobre-geo" viewBox="0 0 104 104" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <line x1="52" y1="52" x2="52" y2="18"  stroke="#EDE5CE" stroke-width="0.75" opacity="0.28"/>
+      <line x1="52" y1="52" x2="82" y2="34"  stroke="#EDE5CE" stroke-width="0.75" opacity="0.28"/>
+      <line x1="52" y1="52" x2="82" y2="70"  stroke="#EDE5CE" stroke-width="0.75" opacity="0.28"/>
+      <line x1="52" y1="52" x2="52" y2="86"  stroke="#EDE5CE" stroke-width="0.75" opacity="0.28"/>
+      <line x1="52" y1="52" x2="22" y2="70"  stroke="#EDE5CE" stroke-width="0.75" opacity="0.28"/>
+      <line x1="52" y1="52" x2="22" y2="34"  stroke="#EDE5CE" stroke-width="0.75" opacity="0.28"/>
+      <circle cx="52" cy="52" r="6"  fill="#EDE5CE"/>
+      <circle cx="52" cy="14" r="7"  fill="#7A1A30"/>
+      <circle cx="84" cy="32" r="6"  fill="#E8B820"/>
+      <circle cx="84" cy="72" r="8"  fill="#4E5C1E"/>
+      <circle cx="52" cy="90" r="6"  fill="#E8B820" opacity="0.5"/>
+      <circle cx="20" cy="72" r="5"  fill="#748929"/>
+      <circle cx="20" cy="32" r="6"  fill="#A33050"/>
+    </svg>
+    <div class="sec-motivo sec-wrapper">
+      <span class="sec-label-txt">Sobre · frequência</span>
+      <h2 class="sec-title">Renata Oliveira</h2>
+    </div>
+    <div class="sobre-body-wrapper sec-wrapper">
+      <p class="sobre-texto">
+        Uma pessoa que existe em <strong>múltiplas frequências simultâneas</strong> — a tensão da corda do violino, o eixo do pole, o acorde do violão, o peso dos Racionais que coexiste com Taylor Swift, o sertão (caatinga) entrando numa Salvador que nunca para. O conceito parte da física do som e do movimento: <strong>toda identidade vibra</strong>. A dela vibra em frequências que raramente aparecem juntas.
+      </p>
+    </div>
+  </section>
+
   <section id="sec-projetos">
     <!-- Ghost geometry — grade de pontos, toma toda a seção -->
     <svg class="projetos-geo" viewBox="0 0 560 560" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -453,8 +543,36 @@
       <circle cx="450" cy="520" r="7" fill="#EDE5CE" opacity="0.6"/>
       <circle cx="520" cy="520" r="8" fill="#E8B820" opacity="0.65"/>
     </svg>
+    <!-- Motivo Pesquisa: grade 5×5, cores exatas do conceito -->
+    <svg class="projetos-geo" viewBox="0 0 104 104" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="12" cy="12" r="5"  fill="#E8B820"/>
+      <circle cx="34" cy="12" r="3"  fill="#748929" opacity="0.55"/>
+      <circle cx="56" cy="12" r="5"  fill="#E8B820" opacity="0.75"/>
+      <circle cx="78" cy="12" r="3"  fill="#EDE5CE" opacity="0.35"/>
+      <circle cx="96" cy="12" r="4"  fill="#E8B820"/>
+      <circle cx="12" cy="34" r="3"  fill="#EDE5CE" opacity="0.35"/>
+      <circle cx="34" cy="34" r="6"  fill="#7A1A30"/>
+      <circle cx="56" cy="34" r="3"  fill="#E8B820" opacity="0.5"/>
+      <circle cx="78" cy="34" r="6"  fill="#7A1A30"/>
+      <circle cx="96" cy="34" r="3"  fill="#EDE5CE" opacity="0.25"/>
+      <circle cx="12" cy="56" r="4"  fill="#748929"/>
+      <circle cx="34" cy="56" r="3"  fill="#EDE5CE" opacity="0.25"/>
+      <circle cx="56" cy="56" r="7"  fill="#A33050"/>
+      <circle cx="78" cy="56" r="3"  fill="#748929" opacity="0.65"/>
+      <circle cx="96" cy="56" r="4"  fill="#E8B820" opacity="0.45"/>
+      <circle cx="12" cy="78" r="3"  fill="#EDE5CE" opacity="0.3"/>
+      <circle cx="34" cy="78" r="5"  fill="#4E5C1E"/>
+      <circle cx="56" cy="78" r="3"  fill="#7A1A30" opacity="0.65"/>
+      <circle cx="78" cy="78" r="6"  fill="#E8B820"/>
+      <circle cx="96" cy="78" r="3"  fill="#4E5C1E" opacity="0.55"/>
+      <circle cx="12" cy="96" r="4"  fill="#E8B820" opacity="0.65"/>
+      <circle cx="34" cy="96" r="3"  fill="#EDE5CE" opacity="0.25"/>
+      <circle cx="56" cy="96" r="4"  fill="#748929"/>
+      <circle cx="78" cy="96" r="3"  fill="#7A1A30" opacity="0.45"/>
+      <circle cx="96" cy="96" r="5"  fill="#E8B820"/>
+    </svg>
     <div class="sec-motivo sec-wrapper">
-      <span class="sec-label-txt">Projetos · trabalho em curso</span>
+      <span class="sec-label-txt">Projetos
       <h2 class="sec-title">Projetos</h2>
     </div>
     <div class="projetos-grid-wrapper sec-wrapper">
@@ -473,8 +591,17 @@
       <circle cx="250" cy="250" r="290" fill="none" stroke="#EDE5CE" stroke-width="1.5" opacity="0.07"/>
       <circle cx="250" cy="250" r="360" fill="none" stroke="#EDE5CE" stroke-width="1"   opacity="0.04"/>
     </svg>
+    <!-- Motivo Eixo: o pole, o fio condutor — cores exatas do conceito -->
+    <svg class="notas-geo" viewBox="0 0 104 104" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <line x1="52" y1="6" x2="52" y2="98" stroke="#EDE5CE" stroke-width="2" opacity="0.35"/>
+      <circle cx="52" cy="12" r="7" fill="#E8B820"/>
+      <circle cx="52" cy="31" r="5" fill="#EDE5CE" opacity="0.5"/>
+      <circle cx="52" cy="52" r="9" fill="#7A1A30"/>
+      <circle cx="52" cy="73" r="5" fill="#EDE5CE" opacity="0.5"/>
+      <circle cx="52" cy="92" r="7" fill="#4E5C1E"/>
+    </svg>
     <div class="sec-motivo sec-wrapper">
-      <span class="sec-label-txt">Notas · estudo em aberto</span>
+      <span class="sec-label-txt">Notas
       <h2 class="sec-title">Notas de Estudo</h2>
     </div>
     <div class="notas-body-wrapper sec-wrapper">
