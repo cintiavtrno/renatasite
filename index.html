@@ -1443,10 +1443,15 @@ animate();
     renderizarFeed();
   }
 
- // Carrega HN e fontes BR em paralelo, renderiza só quando ambos terminarem
-  Promise.all([carregarFeed(), carregarFeedBR()]).then(() => {
-    _feedItens.sort((a, b) => b.time - a.time);
+ // HN carrega e renderiza logo
+  // BR carrega depois e atualiza a lista
+  carregarFeed().then(() => {
     renderizarFeed();
+    // BR carrega em seguida e re-renderiza quando chegar
+    carregarFeedBR().then(() => {
+      _feedItens.sort((a, b) => b.time - a.time);
+      renderizarFeed();
+    });
   });
 
   carregarPerfil();
