@@ -1356,6 +1356,12 @@
     <!-- Barra de coleções (Direito Digital, Direito de Família…) -->
     <div class="ref-colecoes-bar" id="ref-colecoes-bar"></div>
 
+    <!-- Exportar a visão atual (coleção/filtro) em ordem alfabética -->
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin:-.4rem 0 1rem">
+      <button class="ref-btn" onclick="exportarRefs('doc')">⬇ Exportar lista (.doc / Word)</button>
+      <button class="ref-btn" onclick="exportarRefs('bib')">⬇ Exportar .bib (LaTeX)</button>
+    </div>
+
     <!-- HERO: importar por DOI -->
     <div class="ref-doi-box">
       <label class="ref-doi-label">Importar por DOI</label>
@@ -2446,6 +2452,67 @@
         ? '✓ BibTeX copiado.'
         : '✓ ABNT copiada (lembre de destacar em negrito o título da obra).');
     }).catch(() => setStatus('status-ref', '✗ Não consegui copiar.', 'err'));
+  }
+
+  /* ── Exportar a coleção/visão atual em ordem alfabética ──── */
+  function _refsVisiveis() {
+    // mesma lógica de filtro do renderReferencias (coleção + tag), sem busca
+    let itens = _refsCache.slice();
+    if (_refColecaoFiltro === SEM_COLECAO) {
+      itens = itens.filter(r => !r.colecao || !_colecoesRef.includes(r.colecao));
+    } else if (_refColecaoFiltro !== 'todas') {
+      itens = itens.filter(r => r.colecao === _refColecaoFiltro);
+    }
+    if (_refTagFiltro !== 'todos') itens = itens.filter(r => (r.tags||[]).includes(_refTagFiltro));
+    // ordem alfabética ABNT, por autor (ignora acento/caixa)
+    const chave = r => (r.autores || r.titulo || '')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    return itens.sort((a, b) => chave(a).localeCompare(chave(b), 'pt-BR'));
+  }
+
+  function _baixar(nome, conteudo, mime) {
+    const blob = new Blob([conteudo], { type: mime });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = nome;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(a.href);
+  }
+
+  function exportarRefs(formato) {
+    const itens = _refsVisiveis();
+    if (!itens.length) { setStatus('status-ref', '⚠ Nada para exportar nesta visão.', 'err'); return; }
+    const nomeColecao = _refColecaoFiltro === 'todas' ? 'todas'
+                      : _refColecaoFiltro === SEM_COLECAO ? 'sem-colecao'
+                      : _refColecaoFiltro;
+    const slug = nomeColecao.normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+                  .replace(/[^a-zA-Z0-9]+/g,'-').toLowerCase();
+
+    if (formato === 'bib') {
+      const bib = itens.map(formatarBibTeX).join('\n\n');
+      _baixar(`referencias-${slug}.bib`, bib, 'application/x-bibtex;charset=utf-8');
+      setStatus('status-ref', `✓ ${itens.length} referência(s) exportada(s) em .bib`);
+      return;
+    }
+
+    // .doc — HTML que o Word abre como documento, com negrito ABNT preservado
+    const titulo = _refColecaoFiltro === 'todas' ? 'Referências'
+                 : _refColecaoFiltro === SEM_COLECAO ? 'Referências (sem coleção)'
+                 : 'Referências — ' + nomeColecao;
+    const lista = itens.map(r => `<p class="ref">${formatarABNT(r)}</p>`).join('\n');
+    const doc = `<!DOCTYPE html><html><head><meta charset="utf-8">
+<style>
+  body { font-family:'Times New Roman',serif; font-size:12pt; }
+  h1 { font-size:12pt; text-align:center; margin-bottom:24pt; text-transform:uppercase; }
+  p.ref { text-align:justify; line-height:1.0; margin:0 0 12pt 0; }
+</style></head><body>
+<h1>${titulo}</h1>
+${lista}
+</body></html>`;
+    _baixar(`referencias-${slug}.doc`, doc, 'application/msword;charset=utf-8');
+    setStatus('status-ref', `✓ ${itens.length} referência(s) exportada(s) em .doc`);
   }
 
   /* ── Inicialização do Caderno ─────────────────────────── */
