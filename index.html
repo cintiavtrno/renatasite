@@ -455,12 +455,81 @@
       margin-top: 2rem;
     }
 
+   /* ── RESPONSIVIDADE ── */
+
+    /* Tablet */
+    @media (max-width: 860px) {
+      .sec-wrapper { padding: 0 1.2rem; }
+      #lista-projetos { grid-template-columns: 1fr 1fr; }
+      .sobre-geo { width: 180px; height: 180px; right: 1rem; }
+      .projetos-geo { width: 320px; height: 320px; }
+      .notas-geo    { width: 320px; height: 320px; }
+      .producoes-geo { width: 260px; height: 260px; }
+    }
+
+    /* Mobile */
     @media (max-width: 600px) {
-      #nav-top { padding: 0.9rem 1.1rem; }
-      .nav-links { gap: 1.2rem; }
-      #corner-badge { left: 1.1rem; bottom: 4.5rem; }
-      #header-3d { height: 65vh; min-height: 400px; }
-      .sec-motivo { padding: 2.5rem 0 0.5rem; }
+      /* Header 3D menor */
+      #header-3d { height: 60vh; min-height: 340px; }
+      #header-3d::after { height: 80px; }
+
+      /* Nav flutuante: nome some, links compactos */
+      #nav-top { padding: 0.75rem 1rem; }
+      .nav-brand { display: none; }
+      .nav-links { gap: 1rem; }
+      .nav-links a { font-size: 0.6rem; letter-spacing: 0.14em; }
+
+      /* Badge bio */
+      #corner-badge { left: 1rem; bottom: 3.5rem; }
+      .badge-bio { font-size: 0.78rem; max-width: 22ch; }
+
+      /* Nav principal: scroll horizontal */
+      #main-nav .sec-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        flex-wrap: nowrap;
+        scrollbar-width: none;
+        padding: 0 1rem;
+      }
+      #main-nav .sec-wrapper::-webkit-scrollbar { display: none; }
+      #main-nav a { white-space: nowrap; padding: 0.75rem 1rem 0.75rem 0; }
+
+      /* Seções: motivo e título */
+      .sec-motivo { padding: 2rem 0 0.5rem; }
+      .sec-title  { font-size: clamp(1.3rem, 6vw, 1.7rem); margin-bottom: 1rem; }
+      .sec-label-txt { font-size: 0.55rem; }
+
+      /* Sobre */
+      .sobre-geo { display: none; }
+      .sobre-texto { font-size: 0.92rem; }
+      .sobre-body-wrapper { padding-bottom: 2.5rem; }
+
+      /* Projetos: coluna única */
+      #lista-projetos { grid-template-columns: 1fr; }
+      .projetos-geo { width: 220px; height: 220px; top: -20px; right: -40px; }
+      .projetos-grid-wrapper { padding-bottom: 2.5rem; }
+
+      /* Produções */
+      .producao-item {
+        grid-template-columns: 1fr;
+        gap: 0.3rem;
+      }
+      .producao-ano { grid-column: 1; grid-row: auto; }
+      .producoes-geo { display: none; }
+      .producoes-body-wrapper { padding-bottom: 2.5rem; }
+
+      /* Notas */
+      .notas-geo { width: 200px; height: 200px; bottom: -60px; left: -50px; }
+      #container-notas { padding: 1.2rem; }
+      .notas-body-wrapper { padding-bottom: 2.5rem; }
+
+      /* Footer */
+      footer { padding: 1.8rem 1rem; }
+    }
+
+    @media (max-width: 380px) {
+      .nav-links { gap: 0.6rem; }
+      #lista-projetos { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -502,6 +571,7 @@
   <div class="sec-wrapper">
     <a href="#sec-sobre">Sobre</a>
     <a href="#sec-projetos">Projetos</a>
+    <a href="#sec-producoes">Produções</a>
     <a href="#sec-notas">Notas</a>
   </div>
 </nav>
@@ -1094,6 +1164,24 @@ animate();
       console.error(err);
     }
   }
+
+  // Pré-cadastra o artigo do CODIRI se ainda não existir
+  (async () => {
+    try {
+      const snap = await db.collection('producoes')
+        .where('venue', '==', 'Anais do VI CODIRI').limit(1).get();
+      if (snap.empty) {
+        await db.collection('producoes').add({
+          titulo:  'A utilização do combate às drogas como pretexto para a opressão do imigrante latino-americano nos Estados Unidos: uma análise histórica',
+          autores: 'Renata Oliveira Nascimento, Isaac Santana Santos Pires, Késia Melanie Gardella',
+          venue:   'Anais do VI CODIRI — Segurança e Governança Global',
+          ano:     2024,
+          url:     '',
+          data_criacao: firebase.firestore.FieldValue.serverTimestamp(),
+        });
+      }
+    } catch(e) { /* silencioso — só roda uma vez */ }
+  })();
 
   carregarPerfil();
   carregarProjetos();
