@@ -460,6 +460,43 @@
       white-space: nowrap;
     }
 
+    /* ══ FREQUÊNCIAS — cada seção do Caderno vibra na sua cor ══ */
+    .cad-bloco {
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid var(--dash-border);
+      border-left: 3px solid var(--freq, var(--ouro));
+    }
+    /* tudo, menos o motivo, fica acima do fantasma */
+    .cad-bloco > :not(.cad-motivo) { position: relative; z-index: 1; }
+    .cad-motivo {
+      position: absolute;
+      pointer-events: none;
+      z-index: 0;
+      opacity: .09;
+    }
+    /* atribuição de frequência por bloco */
+    #bloco-semestre    { --freq: #A33050; }  /* bordô — o pulso     */
+    #bloco-referencias { --freq: #748929; }  /* oliva — o estudo    */
+    #bloco-tarefas     { --freq: #C89012; }  /* ouro  — organização */
+
+    /* o eyebrow e a borda de topo dos cartões puxam a frequência */
+    .cad-bloco .sem-eyebrow { color: var(--freq); }
+    .cad-bloco .sem-card    { border-top-color: var(--freq); }
+
+    /* posições dos motivos Lavater — fantasmas sangrando pras bordas */
+    #motivo-semestre    { top: -45px;   right: -55px; width: 300px; height: 300px; }
+    #motivo-referencias { bottom: -95px; left: -75px; width: 360px; height: 360px; }
+    #motivo-tarefas     { top: -50px;   right: -45px; width: 290px; height: 290px; }
+
+    /* cada aba do semestre numa frequência distinta quando ativa */
+    .semestre-tab:nth-child(1).ativo { color: #A33050; border-bottom-color: #A33050; }
+    .semestre-tab:nth-child(2).ativo { color: #E8B820; border-bottom-color: #E8B820; }
+    .semestre-tab:nth-child(3).ativo { color: #748929; border-bottom-color: #748929; }
+    .semestre-tab:nth-child(4).ativo { color: #E08090; border-bottom-color: #E08090; }
+    .semestre-tab:nth-child(5).ativo { color: #C89012; border-bottom-color: #C89012; }
+    .semestre-tab:nth-child(6).ativo { color: #C8BEA0; border-bottom-color: #C8BEA0; }
+
     /* ══ SEMESTRE — abas internas ════════════════════════════ */
     #bloco-semestre {
       background: rgba(0,0,0,0.2);
@@ -1093,7 +1130,15 @@
   <div id="modo-caderno">
 
   <!-- ══ BLOCO SEMESTRE ══════════════════════════════════════ -->
-  <div id="bloco-semestre">
+  <div id="bloco-semestre" class="cad-bloco">
+    <svg id="motivo-semestre" class="cad-motivo" viewBox="0 0 104 104" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <line x1="52" y1="6" x2="52" y2="98" stroke="#A33050" stroke-width="2"/>
+      <circle cx="52" cy="12" r="7" fill="#E8B820"/>
+      <circle cx="52" cy="31" r="5" fill="#EDE5CE"/>
+      <circle cx="52" cy="52" r="9" fill="#7A1A30"/>
+      <circle cx="52" cy="73" r="5" fill="#EDE5CE"/>
+      <circle cx="52" cy="92" r="7" fill="#4E5C1E"/>
+    </svg>
     <div class="sem-header">
       <div>
         <span class="sem-eyebrow">Semestre atual</span>
@@ -1292,7 +1337,14 @@
   <!-- FIM SEMESTRE -->
 
   <!-- ══ REFERÊNCIAS BIBLIOGRÁFICAS ══════════════════════════ -->
-  <div id="bloco-referencias">
+  <div id="bloco-referencias" class="cad-bloco">
+    <svg id="motivo-referencias" class="cad-motivo" viewBox="0 0 104 104" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="12" cy="12" r="5" fill="#E8B820"/><circle cx="34" cy="12" r="3" fill="#748929"/><circle cx="56" cy="12" r="5" fill="#E8B820"/><circle cx="78" cy="12" r="3" fill="#EDE5CE"/><circle cx="96" cy="12" r="4" fill="#E8B820"/>
+      <circle cx="12" cy="34" r="3" fill="#EDE5CE"/><circle cx="34" cy="34" r="6" fill="#7A1A30"/><circle cx="56" cy="34" r="3" fill="#E8B820"/><circle cx="78" cy="34" r="6" fill="#7A1A30"/><circle cx="96" cy="34" r="3" fill="#EDE5CE"/>
+      <circle cx="12" cy="56" r="4" fill="#748929"/><circle cx="34" cy="56" r="3" fill="#EDE5CE"/><circle cx="56" cy="56" r="7" fill="#A33050"/><circle cx="78" cy="56" r="3" fill="#748929"/><circle cx="96" cy="56" r="4" fill="#E8B820"/>
+      <circle cx="12" cy="78" r="3" fill="#EDE5CE"/><circle cx="34" cy="78" r="5" fill="#4E5C1E"/><circle cx="56" cy="78" r="3" fill="#7A1A30"/><circle cx="78" cy="78" r="6" fill="#E8B820"/><circle cx="96" cy="78" r="3" fill="#4E5C1E"/>
+      <circle cx="12" cy="96" r="4" fill="#E8B820"/><circle cx="34" cy="96" r="3" fill="#EDE5CE"/><circle cx="56" cy="96" r="4" fill="#748929"/><circle cx="78" cy="96" r="3" fill="#7A1A30"/><circle cx="96" cy="96" r="5" fill="#E8B820"/>
+    </svg>
     <div class="sem-header">
       <div>
         <span class="sem-eyebrow">Biblioteca · estilo Zotero</span>
@@ -1369,7 +1421,22 @@
   </div>
 
   <!-- ══ TAREFAS (quadro privado) ════════════════════════════ -->
-  <div id="bloco-tarefas" style="background:rgba(0,0,0,0.2);border-bottom:1px solid var(--dash-border);padding:1.2rem 1.4rem 1.6rem">
+  <div id="bloco-tarefas" class="cad-bloco" style="background:rgba(0,0,0,0.2);padding:1.2rem 1.4rem 1.6rem">
+    <svg id="motivo-tarefas" class="cad-motivo" viewBox="0 0 104 104" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <line x1="52" y1="52" x2="52" y2="18" stroke="#EDE5CE" stroke-width="0.75"/>
+      <line x1="52" y1="52" x2="82" y2="34" stroke="#EDE5CE" stroke-width="0.75"/>
+      <line x1="52" y1="52" x2="82" y2="70" stroke="#EDE5CE" stroke-width="0.75"/>
+      <line x1="52" y1="52" x2="52" y2="86" stroke="#EDE5CE" stroke-width="0.75"/>
+      <line x1="52" y1="52" x2="22" y2="70" stroke="#EDE5CE" stroke-width="0.75"/>
+      <line x1="52" y1="52" x2="22" y2="34" stroke="#EDE5CE" stroke-width="0.75"/>
+      <circle cx="52" cy="52" r="6" fill="#EDE5CE"/>
+      <circle cx="52" cy="14" r="7" fill="#7A1A30"/>
+      <circle cx="84" cy="32" r="6" fill="#E8B820"/>
+      <circle cx="84" cy="72" r="8" fill="#4E5C1E"/>
+      <circle cx="52" cy="90" r="6" fill="#E8B820"/>
+      <circle cx="20" cy="72" r="5" fill="#748929"/>
+      <circle cx="20" cy="32" r="6" fill="#A33050"/>
+    </svg>
     <div class="sem-header">
       <div>
         <span class="sem-eyebrow">Organização · quadro pessoal</span>
@@ -2156,14 +2223,17 @@
       const autores = (m.author||[]).map(a => {
         let family = (a.family || '').trim();
         let given  = (a.given  || '').trim();
-        // Sobrenome composto sem prenome (ex: "Oliveira Mendonça"):
-        // pela convenção ABNT, só a última palavra entra em caixa alta.
-        if (!given && family.includes(' ')) {
+        // ABNT: só a ÚLTIMA palavra do sobrenome entra em caixa alta.
+        // Se o "family" do CrossRef tiver mais de uma palavra (ex.: "Oliveira
+        // Mendonça"), a última vira o sobrenome de entrada e o resto vai pro
+        // prenome — MESMO quando já existe um "given" separado.
+        if (family.includes(' ')) {
           const partes = family.split(/\s+/);
-          family = partes.pop();
-          given  = partes.join(' ');
+          const ultimo = partes.pop();
+          given  = (given ? given + ' ' : '') + partes.join(' ');
+          family = ultimo;
         }
-        return `${family.toUpperCase()}${given ? ', ' + given : ''}`;
+        return `${family.toUpperCase()}${given ? ', ' + given.trim() : ''}`;
       }).join('; ');
       const tipoMap = {'journal-article':'artigo','book':'livro','book-chapter':'capitulo','proceedings-article':'evento','dissertation':'tese'};
       const ano = m.published?.['date-parts']?.[0]?.[0]
